@@ -1,4 +1,4 @@
-package com.sparta.logistics.infrastructure.persistence.common.jpa.config;
+package com.sparta.logistics.infrastructure.persistence.jpa.config;
 
 import com.sparta.logistics.presentation.common.constant.HeaderConstants;
 import jakarta.servlet.http.HttpServletRequest;
