@@ -16,6 +16,24 @@ spring:
         format_sql: true
         use_sql_comments: true
         impl.uuid_binary_compatibility: true
+  cloud:
+    openfeign:
+      client:
+        config:
+          default:
+            connect-timeout: 5000
+            read-timeout: 3000
+            logger-level: basic
+
+management:
+  tracing:
+    enabled: true
+    sampling:
+      probability: 1.0
+
+  zipkin:
+    tracing:
+      endpoint: http://localhost:9411/api/v2/spans
 
 springdoc:
   api-docs:

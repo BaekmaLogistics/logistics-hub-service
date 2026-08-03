@@ -18,12 +18,34 @@ repositories {
     mavenCentral()
 }
 
+dependencyManagement {
+    imports {
+        mavenBom "org.springframework.cloud:spring-cloud-dependencies:2025.0.0"
+    }
+}
+
 dependencies {
+    //Spring Boot
     implementation 'org.springframework.boot:spring-boot-starter-web'
     implementation 'org.springframework.boot:spring-boot-starter-validation'
-    implementation 'org.springframework.boot:spring-boot-starter-security'
+    implementation 'org.springframework.boot:spring-boot-starter-actuator'
     compileOnly 'org.projectlombok:lombok'
     annotationProcessor 'org.projectlombok:lombok'
+
+    //OpenFeign
+    implementation 'org.springframework.cloud:spring-cloud-starter-openfeign'
+
+    //QueryDSL
+    implementation "com.querydsl:querydsl-jpa:5.1.0:jakarta"
+    annotationProcessor "com.querydsl:querydsl-apt:5.1.0:jakarta"
+    annotationProcessor "jakarta.persistence:jakarta.persistence-api"
+    annotationProcessor "jakarta.annotation:jakarta.annotation-api"
+
+    //Micrometer Tracing
+    implementation 'io.micrometer:micrometer-tracing-bridge-brave'
+
+    //Zipkin
+    implementation 'io.zipkin.reporter2:zipkin-reporter-brave'
 
     // Common-Test
     testImplementation 'org.springframework.boot:spring-boot-starter-test'
