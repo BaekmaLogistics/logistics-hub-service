@@ -17,6 +17,19 @@ spring:
         use_sql_comments: true
         impl.uuid_binary_compatibility: true
 
+  rabbitmq:
+    host: ${RABBITMQ_HOST}
+    port: ${RABBITMQ_PORT}
+    username: ${RABBITMQ_USERNAME}
+    password: ${RABBITMQ_PASSWORD}
+
+message:
+  exchange: baekma.exchange # Producer만 적용
+  queue:
+    delivery: delivery.queue
+    hub: hub.queue
+    notification: notification.queue
+
 springdoc:
   api-docs:
     path: /api/api-spec
