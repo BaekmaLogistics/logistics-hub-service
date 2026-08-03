@@ -16,6 +16,11 @@ spring:
         format_sql: true
         use_sql_comments: true
         impl.uuid_binary_compatibility: true
+  # Redis 설정, Redis 사용하지 않을 시 주석처리
+  data:
+    redis:
+      host: ${REDIS_HOST:localhost}
+      port: ${REDIS_PORT:6379}
 
   rabbitmq:
     host: ${RABBITMQ_HOST}
