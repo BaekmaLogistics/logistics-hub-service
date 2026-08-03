@@ -1,4 +1,4 @@
-package com.sparta.logistics.infrastructure.config;
+package com.sparta.logistics.infrastructure.cache;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
@@ -93,7 +93,7 @@ public class RedisConfig {
 
     /**
      * Cache-Aside용 CacheManager.
-     * @Cacheable 이 자동으로 캐시 확인, 사실상 String으로 리턴
+     * `@Cacheable` 이 자동으로 캐시 확인, 사실상 String으로 리턴
      * - entryTtl: 캐시 유효시간(TTL). 10분 지나면 자동 만료되어 stale 데이터 방지.
      * - disableCachingNullValues: null은 캐싱하지 않음 (불필요한 캐시 오염 방지 목적).
      * - computePrefixWith: 실제 Redis key = "{serviceName}::{cacheName}::{key값}" 형태로 저장됨.

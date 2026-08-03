@@ -1,4 +1,4 @@
-package com.sparta.logistics.infrastructure.persistence.common.jpa.entity;
+package com.sparta.logistics.infrastructure.persistence.jpa.entity;
 
 
 import jakarta.persistence.Column;
