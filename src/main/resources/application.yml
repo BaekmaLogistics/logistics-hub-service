@@ -1,0 +1,70 @@
+spring:
+  application:
+    name: logistics
+  #  profiles:
+  #    active: dev
+  datasource:
+    url: jdbc:postgresql://${DB_HOST}:${DB_PORT}/${DB_NAME}
+    username: ${DB_USER}
+    password: ${DB_PASSWORD}
+  jpa:
+    hibernate:
+      ddl-auto: update
+    properties:
+      hibernate:
+        show_sql: true
+        format_sql: true
+        use_sql_comments: true
+        impl.uuid_binary_compatibility: true
+  # Redis 설정, Redis 사용하지 않을 시 주석처리
+  data:
+    redis:
+      host: ${REDIS_HOST:localhost}
+      port: ${REDIS_PORT:6379}
+
+  rabbitmq:
+    host: ${RABBITMQ_HOST}
+    port: ${RABBITMQ_PORT}
+    username: ${RABBITMQ_USERNAME}
+    password: ${RABBITMQ_PASSWORD}
+
+  cloud:
+    openfeign:
+      client:
+        config:
+          default:
+            connect-timeout: 5000
+            read-timeout: 3000
+            logger-level: basic
+
+message:
+  exchange: baekma.exchange # Producer만 적용
+  queue:
+    delivery: delivery.queue
+    hub: hub.queue
+    notification: notification.queue
+
+management:
+  tracing:
+    enabled: true
+    sampling:
+      probability: 1.0
+
+  zipkin:
+    tracing:
+      endpoint: http://localhost:9411/api/v2/spans
+
+springdoc:
+  api-docs:
+    path: /api/api-spec
+    enabled: true
+  swagger-ui:
+    path: /api/api-docs
+    enabled: true
+  override-with-generic-response: false
+  use-fqn: true
+
+logging:
+  level:
+    org.hibernate.SQL: debug
+    org.hibernate.orm.jdbc.bind: trace
