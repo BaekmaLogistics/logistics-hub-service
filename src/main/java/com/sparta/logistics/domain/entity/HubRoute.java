@@ -1,5 +1,6 @@
-package com.sparta.logistics.infrastructure.persistence.jpa.entity;
+package com.sparta.logistics.domain.entity;
 
+import com.sparta.logistics.infrastructure.persistence.jpa.entity.BaseUpdatableEntity;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.Table;

@@ -1,5 +1,6 @@
-package com.sparta.logistics.infrastructure.persistence.jpa.entity;
+package com.sparta.logistics.domain.entity;
 
+import com.sparta.logistics.infrastructure.persistence.jpa.entity.BaseUpdatableEntity;
 import com.sparta.logistics.presentation.common.dto.response.ErrorResponseCode;
 import com.sparta.logistics.presentation.common.exception.ApiException;
 import jakarta.persistence.Column;
@@ -23,7 +24,7 @@ import java.util.UUID;
         }
 )
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
-public class HubInventory extends BaseUpdatableEntity{
+public class HubInventory extends BaseUpdatableEntity {
 
     @Column(name = "hub_id", nullable = false)
     private UUID hubId;

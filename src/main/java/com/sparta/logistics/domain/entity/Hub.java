@@ -1,5 +1,6 @@
-package com.sparta.logistics.infrastructure.persistence.jpa.entity;
+package com.sparta.logistics.domain.entity;
 
+import com.sparta.logistics.infrastructure.persistence.jpa.entity.BaseUpdatableEntity;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.Table;
@@ -14,7 +15,7 @@ import java.util.UUID;
 @Getter
 @Table(name = "p_hubs")
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
-public class Hub extends BaseUpdatableEntity{
+public class Hub extends BaseUpdatableEntity {
 
     @Column(nullable = false)
     private String name;
