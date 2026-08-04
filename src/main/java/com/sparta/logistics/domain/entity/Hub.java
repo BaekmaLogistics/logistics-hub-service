@@ -17,7 +17,7 @@ import java.util.UUID;
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class Hub extends BaseUpdatableEntity {
 
-    @Column(nullable = false)
+    @Column(nullable = false, unique = true)
     private String name;
 
     @Column(nullable = false)
@@ -45,6 +45,22 @@ public class Hub extends BaseUpdatableEntity {
         this.latitude = latitude;
         this.longitude = longitude;
         this.managerId = managerId;
+    }
+
+    public static Hub create(
+            String name,
+            String address,
+            Double latitude,
+            Double longitude,
+            UUID managerId
+    ){
+        return Hub.builder()
+                .name(name)
+                .address(address)
+                .latitude(latitude)
+                .longitude(longitude)
+                .managerId(managerId)
+                .build();
     }
 
     public void update(
