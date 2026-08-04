@@ -21,15 +21,6 @@ class NaverGeocodingClientTest {
     ApplicationContext applicationContext;
 
     @Test
-    void objectMapperBeans() {
-        String[] beans = applicationContext.getBeanNamesForType(ObjectMapper.class);
-
-        for (String bean : beans) {
-            System.out.println(bean);
-        }
-    }
-
-    @Test
     @DisplayName("주소를 위도와 경도로 변환한다.")
     void geocode_success() {
         String address = "서울특별시 송파구 송파대로 55";
