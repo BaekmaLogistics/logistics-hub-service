@@ -51,15 +51,13 @@ public class Hub extends BaseUpdatableEntity {
             String name,
             String address,
             Double latitude,
-            Double longitude,
-            UUID managerId
+            Double longitude
     ){
         return Hub.builder()
                 .name(name)
                 .address(address)
                 .latitude(latitude)
                 .longitude(longitude)
-                .managerId(managerId)
                 .build();
     }
 
@@ -79,7 +77,7 @@ public class Hub extends BaseUpdatableEntity {
         this.longitude = longitude;
     }
 
-    public void updateManagerId(
+    public void assignManagerId(
             UUID managerId
     ){
         this.managerId = managerId;

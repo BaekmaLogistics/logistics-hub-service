@@ -40,12 +40,10 @@ class CreateHubServiceTest {
     @Test
     @DisplayName("허브 생성")
     void createHub_success(){
-        UUID managerId = UUID.randomUUID();
 
         CreateHubCommand command = CreateHubCommand.builder()
                 .name("서울 허브")
                 .address("서울특별시 송파구 송파대로 55")
-                .managerId(managerId)
                 .build();
 
         Coordinate coordinate = new Coordinate(
@@ -85,7 +83,6 @@ class CreateHubServiceTest {
         assertThat(savedHub.getAddress()).isEqualTo(command.getAddress());
         assertThat(savedHub.getLatitude()).isEqualTo(37.474154);
         assertThat(savedHub.getLongitude()).isEqualTo(127.123906);
-        assertThat(savedHub.getManagerId()).isEqualTo(managerId);
     }
 
     @Test
@@ -95,7 +92,6 @@ class CreateHubServiceTest {
         CreateHubCommand command = CreateHubCommand.builder()
                 .name("서울 허브")
                 .address("서울특별시 송파구 송파대로 55")
-                .managerId(UUID.randomUUID())
                 .build();
 
         when(hubRepository.existsByName(command.getName()))

@@ -30,6 +30,5 @@ class NaverGeocodingClientTest {
         assertThat(coordinate.latitude()).isNotNull();
         assertThat(coordinate.longitude()).isNotNull();
 
-        System.out.println(coordinate);
     }
 }

@@ -22,8 +22,6 @@ public class HubInitializer implements ApplicationRunner {
 
     @Override
     public void run(ApplicationArguments args) {
-        System.out.println("HubInitializer");
-        System.out.println("Hub Count = " + hubRepository.count());
 
         if(hubRepository.count() == HubSeed.values().length){
             return;
@@ -36,7 +34,6 @@ public class HubInitializer implements ApplicationRunner {
         }
 
         for(HubSeed hubSeed : HubSeed.values()){
-            System.out.println("생성 대상 = " + hubSeed.getName());
 
             CreateHubCommand command = CreateHubCommand.builder()
                     .name(hubSeed.getName())

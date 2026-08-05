@@ -40,7 +40,7 @@ public class HubQueryController {
                 sort = "createdAt"
         ) Pageable pageable
     ) {
-        System.out.println("condition: "+condition.getName());
+
         return GeneralResponse.toResponseEntity(
                 GeneralResponseCode.OK,
                 hubQueryUseCase.searchHubs(condition, pageable)

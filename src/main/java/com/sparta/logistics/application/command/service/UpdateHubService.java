@@ -37,10 +37,6 @@ public class UpdateHubService implements UpdateHubUseCase {
             hub.updateName(command.getName());
         }
 
-        if(command.getManagerId() != null){
-            hub.updateManagerId(command.getManagerId());
-        }
-
         if(!Objects.equals(hub.getAddress(), command.getAddress())){
             Coordinate coordinate = geocodingService.getCoordinate(command.getAddress());
 

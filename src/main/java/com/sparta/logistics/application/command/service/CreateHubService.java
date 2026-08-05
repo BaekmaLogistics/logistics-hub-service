@@ -23,29 +23,20 @@ public class CreateHubService implements CreateHubUseCase {
     @Override
     @Transactional
     public CreateHubResponse createHub(CreateHubCommand command){
-        // TODO: User Service 연동 후
-        // managerId 존재 여부 및 HUB_MANAGER 권한 검증
         if(hubRepository.existsByName(command.getName())){
             throw new ApiException(ErrorResponseCode.HUB_ALREADY_EXISTS);
         }
 
-        System.out.println("1. Geocoding 시작");
-
         Coordinate coordinate = geocodingService.getCoordinate(command.getAddress());
-
-        System.out.println("2. Geocoding 성공");
 
         Hub hub = Hub.create(
                 command.getName(),
                 command.getAddress(),
                 coordinate.latitude(),
-                coordinate.longitude(),
-                command.getManagerId()
+                coordinate.longitude()
         );
 
         Hub savedHub = hubRepository.save(hub);
-
-        System.out.println("3. 저장 완료");
 
         return CreateHubResponse.from(savedHub);
     }

@@ -17,8 +17,6 @@ public class NaverFeignConfig {
     @Bean
     public RequestInterceptor naverRequestInterceptor() {
         return requestTemplate -> {
-            System.out.println("ClientId = " + clientId);
-            System.out.println("ClientSecret = " + clientSecret);
 
             requestTemplate.header("x-ncp-apigw-api-key-id", clientId);
             requestTemplate.header("x-ncp-apigw-api-key", clientSecret);

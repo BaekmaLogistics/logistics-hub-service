@@ -44,14 +44,12 @@ class UpdateHubServiceTest {
     @DisplayName("허브 수정 성공")
     void updateHub_success() {
         UUID hubId = UUID.randomUUID();
-        UUID managerId = UUID.randomUUID();
 
         Hub hub = Hub.builder()
                 .name("서울 허브")
                 .address("서울")
                 .latitude(37.1)
                 .longitude(127.1)
-                .managerId(managerId)
                 .build();
 
         given(hubRepository.findById(hubId))
@@ -61,7 +59,6 @@ class UpdateHubServiceTest {
                 .id(hubId)
                 .name("서울 허브")
                 .address("경기도 성남시")
-                .managerId(managerId)
                 .build();
 
         Coordinate coordinate =
@@ -109,7 +106,6 @@ class UpdateHubServiceTest {
                 .id(hubId)
                 .name("서울 허브")
                 .address("경기도 성남시")
-                .managerId(managerId)
                 .build();
 
         assertThatThrownBy(() -> updateHubService.updateHub(command))
@@ -130,7 +126,6 @@ class UpdateHubServiceTest {
                 .id(hubId)
                 .name("서울 허브")
                 .address("경기도 성남시")
-                .managerId(UUID.randomUUID())
                 .build();
 
         assertThatThrownBy(() -> updateHubService.updateHub(command))
@@ -162,7 +157,6 @@ class UpdateHubServiceTest {
                 .id(hubId)
                 .name("새로운 이름")
                 .address("서울특별시 송파구")
-                .managerId(managerId)
                 .build();
 
         UpdateHubResponse response = updateHubService.updateHub(command);
@@ -196,7 +190,6 @@ class UpdateHubServiceTest {
                 .id(hubId)
                 .name(null)
                 .address("경기도 성남시")
-                .managerId(null)
                 .build();
 
         Coordinate coordinate = new Coordinate(37.222, 127.333);
@@ -217,14 +210,12 @@ class UpdateHubServiceTest {
     @DisplayName("수정된 허브 정보가 응답의 모든 필드에 매핑된다")
     void updateHub_success_fullResponseMapping() {
         UUID hubId = UUID.randomUUID();
-        UUID managerId = UUID.randomUUID();
 
         Hub hub = Hub.builder()
                 .name("서울 허브")
                 .address("서울")
                 .latitude(37.1)
                 .longitude(127.1)
-                .managerId(UUID.randomUUID())
                 .build();
 
         ReflectionTestUtils.setField(hub, "id", hubId);
@@ -236,7 +227,6 @@ class UpdateHubServiceTest {
                 .id(hubId)
                 .name("부산 허브")
                 .address("부산광역시")
-                .managerId(managerId)
                 .build();
 
         Coordinate coordinate = new Coordinate(35.1, 129.0);
@@ -251,7 +241,6 @@ class UpdateHubServiceTest {
         assertThat(response.getAddress()).isEqualTo("부산광역시");
         assertThat(response.getLatitude()).isEqualTo(35.1);
         assertThat(response.getLongitude()).isEqualTo(129.0);
-        assertThat(response.getManagerId()).isEqualTo(managerId);
     }
 
     @Test
@@ -275,7 +264,6 @@ class UpdateHubServiceTest {
                 .id(hubId)
                 .name(null)
                 .address(null)
-                .managerId(null)
                 .build();
 
         Coordinate coordinate = new Coordinate(0.0, 0.0);

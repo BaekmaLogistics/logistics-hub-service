@@ -45,8 +45,7 @@ class HubQueryServiceTest {
                 "서울 허브",
                 "서울특별시 송파구",
                 37.5145,
-                127.1059,
-                UUID.randomUUID()
+                127.1059
         );
 
         when(hubRepository.findById(hubId))
@@ -87,8 +86,7 @@ class HubQueryServiceTest {
                 "서울 허브",
                 "서울특별시 송파구",
                 37.5145,
-                127.1059,
-                UUID.randomUUID()
+                127.1059
         );
 
         Page<Hub> hubPage = new PageImpl<>(List.of(hub), pageable, 1);

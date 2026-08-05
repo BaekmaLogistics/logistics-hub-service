@@ -21,7 +21,6 @@ public class UpdateHubRequest {
                 .id(hubId)
                 .name(name)
                 .address(address)
-                .managerId(managerId)
                 .build();
 
     }

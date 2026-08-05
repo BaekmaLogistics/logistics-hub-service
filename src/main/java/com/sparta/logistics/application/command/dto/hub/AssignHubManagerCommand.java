@@ -1,19 +1,17 @@
 package com.sparta.logistics.application.command.dto.hub;
 
-import com.sparta.logistics.presentation.command.request.CreateHubRequest;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
 
 import java.util.UUID;
 
-@Getter
 @Builder
+@Getter
 @AllArgsConstructor
-public class CreateHubCommand {
+public class AssignHubManagerCommand {
 
-    private final String name;
+    private final UUID hubId;
 
-    private final String address;
-
+    private final UUID managerId;
 }

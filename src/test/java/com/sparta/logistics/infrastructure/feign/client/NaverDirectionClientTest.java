@@ -37,7 +37,5 @@ class NaverDirectionClientTest {
         assertThat(routeInfo).isNotNull();
         assertThat(routeInfo.getDistance()).isPositive();
         assertThat(routeInfo.getDuration()).isPositive();
-
-        System.out.println(routeInfo);
     }
 }

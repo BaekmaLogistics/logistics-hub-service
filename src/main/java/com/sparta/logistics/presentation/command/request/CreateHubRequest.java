@@ -27,7 +27,6 @@ public class CreateHubRequest {
         return CreateHubCommand.builder()
                 .name(name)
                 .address(address)
-                .managerId(managerId)
                 .build();
     }
 }
