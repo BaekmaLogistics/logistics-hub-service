@@ -29,6 +29,10 @@ public class UpdateHubService implements UpdateHubUseCase {
         Hub hub = hubRepository.findById(command.getId())
                 .orElseThrow(() -> new ApiException(ErrorResponseCode.HUB_NOT_FOUND));
 
+         if(hub.isDeleted()){
+             throw new ApiException(ErrorResponseCode.HUB_ALREADY_DELETED);
+         }
+
         if(command.getName() != null){
             hub.updateName(command.getName());
         }

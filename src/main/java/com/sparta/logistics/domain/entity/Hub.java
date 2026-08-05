@@ -84,4 +84,8 @@ public class Hub extends BaseUpdatableEntity {
     ){
         this.managerId = managerId;
     }
+
+    public boolean isDeleted() {
+        return getDeletedAt() != null;
+    }
 }

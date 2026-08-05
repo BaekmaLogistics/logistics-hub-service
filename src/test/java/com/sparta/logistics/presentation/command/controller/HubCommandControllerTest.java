@@ -187,4 +187,30 @@ class HubCommandControllerTest {
         verify(updateHubUseCase).updateHub(any(UpdateHubCommand.class));
     }
 
+    @Test
+    @DisplayName("삭제된 허브 수정 시 예외 발생")
+    void updateHub_fail_deletedHub() throws Exception {
+
+        UUID hubId = UUID.randomUUID();
+        UUID managerId = UUID.randomUUID();
+
+        UpdateHubRequest request = UpdateHubRequest.builder()
+                .name("서울 허브")
+                .address("경기도 성남시")
+                .managerId(managerId)
+                .build();
+
+        given(updateHubUseCase.updateHub(any(UpdateHubCommand.class)))
+                .willThrow(new ApiException(ErrorResponseCode.HUB_ALREADY_DELETED));
+
+        mockMvc.perform(
+                        patch("/api/v1/hubs/{hubId}", hubId)
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content(objectMapper.writeValueAsString(request))
+                )
+                .andExpect(status().isBadRequest());
+
+        verify(updateHubUseCase).updateHub(any(UpdateHubCommand.class));
+    }
+
 }
