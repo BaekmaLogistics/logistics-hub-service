@@ -14,6 +14,7 @@ import com.sparta.logistics.presentation.command.request.UpdateHubRequest;
 import com.sparta.logistics.presentation.common.exception.GlobalExceptionHandler;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import org.mockito.ArgumentCaptor;
 import org.springframework.http.MediaType;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
@@ -23,6 +24,7 @@ import org.springframework.test.web.servlet.MockMvc;
 
 import java.util.UUID;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.*;
@@ -211,6 +213,116 @@ class HubCommandControllerTest {
                 .andExpect(status().isBadRequest());
 
         verify(updateHubUseCase).updateHub(any(UpdateHubCommand.class));
+    }
+
+    @Test
+    @DisplayName("경로의 허브 ID가 커맨드에 반영된다")
+    void updateHub_success_passesHubIdFromPath() throws Exception {
+        UUID hubId = UUID.randomUUID();
+        UUID managerId = UUID.randomUUID();
+
+        UpdateHubRequest request = UpdateHubRequest.builder()
+                .name("서울 허브")
+                .address("경기도 성남시")
+                .managerId(managerId)
+                .build();
+
+        UpdateHubResponse response = UpdateHubResponse.builder()
+                .id(hubId)
+                .name("서울 허브")
+                .address("경기도 성남시")
+                .latitude(37.2)
+                .longitude(127.3)
+                .managerId(managerId)
+                .build();
+
+        given(updateHubUseCase.updateHub(any(UpdateHubCommand.class)))
+                .willReturn(response);
+
+        mockMvc.perform(
+                        patch("/api/v1/hubs/{hubId}", hubId)
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content(objectMapper.writeValueAsString(request))
+                )
+                .andExpect(status().isOk());
+
+        ArgumentCaptor<UpdateHubCommand> captor = ArgumentCaptor.forClass(UpdateHubCommand.class);
+        verify(updateHubUseCase).updateHub(captor.capture());
+
+        UpdateHubCommand capturedCommand = captor.getValue();
+        assertThat(capturedCommand.getId()).isEqualTo(hubId);
+        assertThat(capturedCommand.getName()).isEqualTo("서울 허브");
+        assertThat(capturedCommand.getAddress()).isEqualTo("경기도 성남시");
+        assertThat(capturedCommand.getManagerId()).isEqualTo(managerId);
+    }
+
+    @Test
+    @DisplayName("허브 수정 성공 시 위치 및 담당자 정보도 응답에 포함된다")
+    void updateHub_success_returnsFullResponseFields() throws Exception {
+        UUID hubId = UUID.randomUUID();
+        UUID managerId = UUID.randomUUID();
+
+        UpdateHubRequest request = UpdateHubRequest.builder()
+                .name("서울 허브")
+                .address("경기도 성남시")
+                .managerId(managerId)
+                .build();
+
+        UpdateHubResponse response = UpdateHubResponse.builder()
+                .id(hubId)
+                .name("서울 허브")
+                .address("경기도 성남시")
+                .latitude(37.222)
+                .longitude(127.333)
+                .managerId(managerId)
+                .build();
+
+        given(updateHubUseCase.updateHub(any(UpdateHubCommand.class)))
+                .willReturn(response);
+
+        mockMvc.perform(
+                        patch("/api/v1/hubs/{hubId}", hubId)
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content(objectMapper.writeValueAsString(request))
+                )
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.id").value(hubId.toString()))
+                .andExpect(jsonPath("$.data.latitude").value(37.222))
+                .andExpect(jsonPath("$.data.longitude").value(127.333))
+                .andExpect(jsonPath("$.data.managerId").value(managerId.toString()));
+    }
+
+    @Test
+    @DisplayName("일부 필드만 포함된 요청도 유효성 검증을 통과한다")
+    void updateHub_success_partialFieldsAllowed() throws Exception {
+        UUID hubId = UUID.randomUUID();
+
+        UpdateHubRequest request = UpdateHubRequest.builder()
+                .address("경기도 성남시")
+                .build();
+
+        UpdateHubResponse response = UpdateHubResponse.builder()
+                .id(hubId)
+                .address("경기도 성남시")
+                .build();
+
+        given(updateHubUseCase.updateHub(any(UpdateHubCommand.class)))
+                .willReturn(response);
+
+        mockMvc.perform(
+                        patch("/api/v1/hubs/{hubId}", hubId)
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content(objectMapper.writeValueAsString(request))
+                )
+                .andExpect(status().isOk());
+
+        ArgumentCaptor<UpdateHubCommand> captor = ArgumentCaptor.forClass(UpdateHubCommand.class);
+        verify(updateHubUseCase).updateHub(captor.capture());
+
+        UpdateHubCommand capturedCommand = captor.getValue();
+        assertThat(capturedCommand.getName()).isNull();
+        assertThat(capturedCommand.getManagerId()).isNull();
+        assertThat(capturedCommand.getAddress()).isEqualTo("경기도 성남시");
     }
 
 }
