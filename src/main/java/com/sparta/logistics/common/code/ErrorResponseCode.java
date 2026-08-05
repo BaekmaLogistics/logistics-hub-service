@@ -17,7 +17,8 @@ public enum ErrorResponseCode implements ApiResponseCode {
     INVALID_SAFETY_STOCK(HttpStatus.BAD_REQUEST, "HUB_0003", "안전 재고는 0 이상이어야 합니다."),
     HUB_ALREADY_EXISTS(HttpStatus.CONFLICT, "HUB_0004", "이미 존재하는 허브입니다."),
     HUB_NOT_FOUND(HttpStatus.NOT_FOUND, "HUB_0005", "허브를 찾을 수 없습니다."),
-    INVALID_ADDRESS(HttpStatus.BAD_REQUEST, "HUB_0006", "유효하지 않은 주소입니다.");
+    INVALID_ADDRESS(HttpStatus.BAD_REQUEST, "HUB_0006", "유효하지 않은 주소입니다."),
+    HUB_ALREADY_DELETED(HttpStatus.BAD_REQUEST, "HUB_0007", "삭제된 허브입니다.");
 
 
     private final HttpStatus status;

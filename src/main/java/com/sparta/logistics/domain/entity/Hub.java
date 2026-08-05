@@ -63,17 +63,29 @@ public class Hub extends BaseUpdatableEntity {
                 .build();
     }
 
-    public void update(
-            String name,
-            String address,
-            Double latitude,
-            Double longitude,
-            UUID managerId
+    public void updateName(
+            String name
     ) {
         this.name = name;
+    }
+
+    public void updateAddress(
+            String address,
+            Double latitude,
+            Double longitude
+    ){
         this.address = address;
         this.latitude = latitude;
         this.longitude = longitude;
+    }
+
+    public void updateManagerId(
+            UUID managerId
+    ){
         this.managerId = managerId;
+    }
+
+    public boolean isDeleted() {
+        return getDeletedAt() != null;
     }
 }
