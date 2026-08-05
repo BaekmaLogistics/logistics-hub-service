@@ -12,6 +12,7 @@ import com.sparta.logistics.domain.repository.HubRepository;
 import com.sparta.logistics.domain.repository.HubRouteRepository;
 import com.sparta.logistics.infrastructure.feign.dto.direction.RouteInfo;
 import lombok.RequiredArgsConstructor;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -57,15 +58,18 @@ public class CreateHubRouteService implements CreateHubRouteUseCase {
                 .distance(routeInfo.getDistance())
                 .duration(routeInfo.getDuration())
                 .build();
+        try{
+            HubRoute savedHubRouted = hubRouteRepository.saveAndFlush(hubRoute);
 
-        HubRoute savedHubRouted = hubRouteRepository.save(hubRoute);
-
-        return CreateHubRouteResponse.builder()
-                .hubRouteId(savedHubRouted.getId())
-                .fromHubId(savedHubRouted.getFromHubId())
-                .toHubId(savedHubRouted.getToHubId())
-                .distance(savedHubRouted.getDistance())
-                .duration(savedHubRouted.getDuration())
-                .build();
+            return CreateHubRouteResponse.builder()
+                    .hubRouteId(savedHubRouted.getId())
+                    .fromHubId(savedHubRouted.getFromHubId())
+                    .toHubId(savedHubRouted.getToHubId())
+                    .distance(savedHubRouted.getDistance())
+                    .duration(savedHubRouted.getDuration())
+                    .build();
+        } catch (DataIntegrityViolationException e) {
+            throw new ApiException(ErrorResponseCode.HUB_ROUTE_ALREADY_EXISTS);
+        }
     }
 }

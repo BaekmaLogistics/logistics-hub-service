@@ -13,6 +13,7 @@ import com.sparta.logistics.presentation.command.request.CreateHubRequest;
 import com.sparta.logistics.presentation.command.request.UpdateHubRequest;
 import com.sparta.logistics.presentation.common.exception.GlobalExceptionHandler;
 import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
@@ -20,6 +21,7 @@ import org.springframework.http.MediaType;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.context.annotation.Import;
+import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 
@@ -34,8 +36,12 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
+@Tag("unit")
 @WebMvcTest(HubCommandController.class)
 @Import(GlobalExceptionHandler.class)
+@TestPropertySource(properties = {
+        "NAVER_MAP_URL=http://localhost"
+})
 class HubCommandControllerTest {
 
     @Autowired

@@ -34,6 +34,14 @@ public class HubRouteInitializer implements ApplicationRunner {
     private final CreateHubRouteUseCase createHubRouteUseCase;
 
     private void createRoute(Hub fromHub, Hub toHub){
+
+        if(hubRouteRepository.existsByFromHubIdAndToHubId(
+                fromHub.getId(),
+                toHub.getId()
+        )){
+            return;
+        }
+
         createHubRouteUseCase.create(
                 CreateHubRouteCommand.builder()
                         .fromHubId(fromHub.getId())
@@ -54,9 +62,6 @@ public class HubRouteInitializer implements ApplicationRunner {
 
     @Override
     public void run(ApplicationArguments args){
-        if(hubRouteRepository.count()>0){
-            return;
-        }
 
         Map<String, Hub> hubMap = hubRepository.findAll()
                 .stream()
@@ -73,7 +78,6 @@ public class HubRouteInitializer implements ApplicationRunner {
                 createRoute(fromHub, toHub);
                 createRoute(toHub, fromHub);
             } catch (Exception e) {
-                e.printStackTrace();
 
                 throw new IllegalStateException(
                         String.format(

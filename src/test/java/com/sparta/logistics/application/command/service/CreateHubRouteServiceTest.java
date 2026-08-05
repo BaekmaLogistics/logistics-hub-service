@@ -11,6 +11,7 @@ import com.sparta.logistics.domain.repository.HubRepository;
 import com.sparta.logistics.domain.repository.HubRouteRepository;
 import com.sparta.logistics.infrastructure.feign.dto.direction.RouteInfo;
 import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -26,6 +27,7 @@ import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
+@Tag("unit")
 @ExtendWith(MockitoExtension.class)
 class CreateHubRouteServiceTest {
 
@@ -85,8 +87,17 @@ class CreateHubRouteServiceTest {
         when(directionService.getRoute(fromHub, toHub))
                 .thenReturn(routeInfo);
 
-        when(hubRouteRepository.save(any(HubRoute.class)))
-                .thenAnswer(invocation -> invocation.getArgument(0));
+        HubRoute savedHubRoute = HubRoute.builder()
+                .fromHubId(fromHubId)
+                .toHubId(toHubId)
+                .distance(35.8)
+                .duration(42)
+                .build();
+
+        ReflectionTestUtils.setField(savedHubRoute, "id", UUID.randomUUID());
+
+        when(hubRouteRepository.saveAndFlush(any(HubRoute.class)))
+                .thenReturn(savedHubRoute);
 
         // when
         CreateHubRouteResponse response =
@@ -102,7 +113,7 @@ class CreateHubRouteServiceTest {
         verify(hubRepository).findById(fromHubId);
         verify(hubRepository).findById(toHubId);
         verify(directionService).getRoute(fromHub, toHub);
-        verify(hubRouteRepository).save(any(HubRoute.class));
+        verify(hubRouteRepository).saveAndFlush(any(HubRoute.class));
     }
 
     @Test

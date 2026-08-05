@@ -3,6 +3,7 @@ package com.sparta.logistics.application.initializer;
 import com.sparta.logistics.application.command.dto.hub.CreateHubCommand;
 import com.sparta.logistics.application.command.usecase.CreateHubUseCase;
 import com.sparta.logistics.application.initializer.seed.HubSeed;
+import com.sparta.logistics.domain.entity.Hub;
 import com.sparta.logistics.domain.repository.HubRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.boot.ApplicationArguments;
@@ -20,20 +21,24 @@ public class HubInitializer implements ApplicationRunner {
     private final CreateHubUseCase createHubUseCase;
     private final HubRepository hubRepository;
 
-    @Override
-    public void run(ApplicationArguments args) {
-
-        if(hubRepository.count() == HubSeed.values().length){
-            return;
-        }
-
-        if (hubRepository.count() > 0) {
-            throw new IllegalStateException(
-                    "허브 초기 데이터가 일부만 존재합니다. DB를 확인해주세요."
-            );
-        }
-
+    private void validateHubSeedConsistency(){
         for(HubSeed hubSeed : HubSeed.values()){
+            Hub hub = hubRepository.findByName(hubSeed.getName())
+                    .orElseThrow(() ->
+                            new IllegalStateException(
+                                    "필수 허브가 누락되었습니다. name=" + hubSeed.getName()
+                            ));
+
+            if (!hub.getAddress().equals(hubSeed.getAddress())) {
+                throw new IllegalStateException(
+                        "허브 시드 데이터가 일치하지 않습니다. name=" + hubSeed.getName()
+                );
+            }
+        }
+    }
+
+    private void initializeHubs(){
+        for (HubSeed hubSeed : HubSeed.values()) {
 
             CreateHubCommand command = CreateHubCommand.builder()
                     .name(hubSeed.getName())
@@ -42,5 +47,15 @@ public class HubInitializer implements ApplicationRunner {
 
             createHubUseCase.createHub(command);
         }
+    }
+
+    @Override
+    public void run(ApplicationArguments args) {
+        if (hubRepository.count() == 0) {
+            initializeHubs();
+            return;
+        }
+
+        validateHubSeedConsistency();
     }
 }

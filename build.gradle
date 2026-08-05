@@ -91,3 +91,46 @@ tasks.withType(JavaCompile).configureEach {
 clean {
     delete generated
 }
+
+tasks.register("unitTest", Test){
+    description= "Runs unit tests."
+    group = "verification"
+
+    testClassesDirs = sourceSets.test.output.classesDirs
+    classpath = sourceSets.test.runtimeClasspath
+
+    useJUnitPlatform {
+        includeTags("unit")
+    }
+}
+
+tasks.register("integrationTest", Test) {
+    description = "Runs integration tests."
+    group = "verification"
+
+    testClassesDirs = sourceSets.test.output.classesDirs
+    classpath = sourceSets.test.runtimeClasspath
+
+    useJUnitPlatform {
+        includeTags("integration")
+    }
+}
+
+tasks.register("externalTest", Test) {
+    description = "Runs external API tests."
+    group = "verification"
+
+    testClassesDirs = sourceSets.test.output.classesDirs
+    classpath = sourceSets.test.runtimeClasspath
+
+    useJUnitPlatform {
+        includeTags("external")
+    }
+}
+
+tasks.register("allTests") {
+    group = "verification"
+
+    dependsOn("unitTest")
+    dependsOn("integrationTest")
+}
