@@ -1,6 +1,5 @@
-package com.sparta.logistics.infrastructure.feign;
+package com.sparta.logistics.infrastructure.feign.client;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.sparta.logistics.application.common.dto.Coordinate;
 import com.sparta.logistics.application.common.service.GeocodingService;
 import org.junit.jupiter.api.DisplayName;

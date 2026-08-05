@@ -29,7 +29,11 @@ public class CreateHubService implements CreateHubUseCase {
             throw new ApiException(ErrorResponseCode.HUB_ALREADY_EXISTS);
         }
 
+        System.out.println("1. Geocoding 시작");
+
         Coordinate coordinate = geocodingService.getCoordinate(command.getAddress());
+
+        System.out.println("2. Geocoding 성공");
 
         Hub hub = Hub.create(
                 command.getName(),
@@ -40,6 +44,8 @@ public class CreateHubService implements CreateHubUseCase {
         );
 
         Hub savedHub = hubRepository.save(hub);
+
+        System.out.println("3. 저장 완료");
 
         return CreateHubResponse.from(savedHub);
     }

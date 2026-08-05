@@ -29,7 +29,7 @@ public class Hub extends BaseUpdatableEntity {
     @Column(nullable = false)
     private Double longitude;
 
-    @Column(name = "manager_id", nullable = false)
+    @Column(name = "manager_id")
     private UUID managerId;
 
     @Builder
