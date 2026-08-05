@@ -1,8 +1,10 @@
 package com.sparta.logistics.presentation.command.controller;
 
 import com.sparta.logistics.application.command.dto.hub.CreateHubResponse;
+import com.sparta.logistics.application.command.dto.hub.DeleteHubCommand;
 import com.sparta.logistics.application.command.dto.hub.UpdateHubResponse;
 import com.sparta.logistics.application.command.usecase.CreateHubUseCase;
+import com.sparta.logistics.application.command.usecase.DeleteHubUseCase;
 import com.sparta.logistics.application.command.usecase.UpdateHubUseCase;
 import com.sparta.logistics.common.code.GeneralResponseCode;
 import com.sparta.logistics.presentation.command.request.CreateHubRequest;
@@ -22,6 +24,7 @@ public class HubCommandController {
 
     private final CreateHubUseCase createHubUseCase;
     private final UpdateHubUseCase updateHubUseCase;
+    private final DeleteHubUseCase deleteHubUseCase;
 
     @PostMapping("/hubs")
     public ResponseEntity<GeneralResponse<CreateHubResponse>> createHub(
@@ -45,6 +48,23 @@ public class HubCommandController {
         return GeneralResponse.toResponseEntity(
                 GeneralResponseCode.OK,
                 response
+        );
+    }
+
+    @DeleteMapping("/hubs/{hubId}")
+    public ResponseEntity<GeneralResponse<Void>> deleteHub(
+            @PathVariable UUID hubId
+    ) {
+        DeleteHubCommand command = DeleteHubCommand.builder()
+                .id(hubId)
+                .deletedBy(UUID.randomUUID()) // TODO: JWT 연동 후 로그인 사용자 ID로 변경
+                .build();
+
+        deleteHubUseCase.deleteHub(command);
+
+        return GeneralResponse.toResponseEntity(
+                GeneralResponseCode.OK,
+                null
         );
     }
 }
