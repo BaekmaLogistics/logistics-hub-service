@@ -1,11 +1,9 @@
 package com.sparta.logistics.presentation.command.controller;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.sparta.logistics.application.command.dto.hub.CreateHubCommand;
-import com.sparta.logistics.application.command.dto.hub.CreateHubResponse;
-import com.sparta.logistics.application.command.dto.hub.UpdateHubCommand;
-import com.sparta.logistics.application.command.dto.hub.UpdateHubResponse;
+import com.sparta.logistics.application.command.dto.hub.*;
 import com.sparta.logistics.application.command.usecase.CreateHubUseCase;
+import com.sparta.logistics.application.command.usecase.DeleteHubUseCase;
 import com.sparta.logistics.application.command.usecase.UpdateHubUseCase;
 import com.sparta.logistics.common.code.ErrorResponseCode;
 import com.sparta.logistics.common.exception.ApiException;
@@ -15,6 +13,7 @@ import com.sparta.logistics.presentation.common.exception.GlobalExceptionHandler
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
+import org.mockito.Mock;
 import org.springframework.http.MediaType;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
@@ -47,6 +46,9 @@ class HubCommandControllerTest {
 
     @MockitoBean
     UpdateHubUseCase updateHubUseCase;
+
+    @MockitoBean
+    DeleteHubUseCase deleteHubUseCase;
 
     @Test
     @DisplayName("허브 생성 성공")
@@ -325,4 +327,61 @@ class HubCommandControllerTest {
         assertThat(capturedCommand.getAddress()).isEqualTo("경기도 성남시");
     }
 
+    @Test
+    @DisplayName("허브 삭제 성공")
+    void deleteHub_success() throws Exception {
+
+        UUID hubId = UUID.randomUUID();
+
+        doNothing().when(deleteHubUseCase)
+                .deleteHub(any(DeleteHubCommand.class));
+
+        mockMvc.perform(
+                        delete("/api/v1/hubs/{hubId}", hubId)
+                )
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.message")
+                        .value("요청이 성공적으로 처리되었습니다."));
+
+        verify(deleteHubUseCase)
+                .deleteHub(any(DeleteHubCommand.class));
+    }
+
+    @Test
+    @DisplayName("존재하지 않는 허브 삭제")
+    void deleteHub_fail_notFound() throws Exception {
+
+        UUID hubId = UUID.randomUUID();
+
+        doThrow(new ApiException(ErrorResponseCode.HUB_NOT_FOUND))
+                .when(deleteHubUseCase)
+                .deleteHub(any(DeleteHubCommand.class));
+
+        mockMvc.perform(
+                        delete("/api/v1/hubs/{hubId}", hubId)
+                )
+                .andExpect(status().isNotFound());
+
+        verify(deleteHubUseCase)
+                .deleteHub(any(DeleteHubCommand.class));
+    }
+
+    @Test
+    @DisplayName("이미 삭제된 허브 삭제")
+    void deleteHub_fail_alreadyDeleted() throws Exception {
+
+        UUID hubId = UUID.randomUUID();
+
+        doThrow(new ApiException(ErrorResponseCode.HUB_ALREADY_DELETED))
+                .when(deleteHubUseCase)
+                .deleteHub(any(DeleteHubCommand.class));
+
+        mockMvc.perform(
+                        delete("/api/v1/hubs/{hubId}", hubId)
+                )
+                .andExpect(status().isBadRequest());
+
+        verify(deleteHubUseCase)
+                .deleteHub(any(DeleteHubCommand.class));
+    }
 }
