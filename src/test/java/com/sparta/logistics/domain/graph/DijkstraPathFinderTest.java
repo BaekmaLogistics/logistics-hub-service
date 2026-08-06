@@ -5,6 +5,7 @@ package com.sparta.logistics.domain.graph;
 // |            |
 // C ----8----- D
 
+import com.sparta.logistics.common.code.ErrorResponseCode;
 import com.sparta.logistics.common.exception.ApiException;
 import com.sparta.logistics.domain.model.ShortestPath;
 import org.junit.jupiter.api.DisplayName;
@@ -134,5 +135,46 @@ class DijkstraPathFinderTest {
         assertThatThrownBy(() ->
                 pathFinder.findShortestPath(graph, a, c))
                 .isInstanceOf(ApiException.class);
+    }
+
+    @Test
+    @DisplayName("그래프에 존재하지 않는 허브이면 예외를 발생시킨다.")
+    void throwException_whenHubNotExists() {
+
+        // given
+        UUID fromHubId = UUID.randomUUID();
+        UUID toHubId = UUID.randomUUID();
+
+        HubNode fromNode = new HubNode(fromHubId, 0, 0);
+
+        Map<UUID, HubNode> nodes = new HashMap<>();
+        nodes.put(fromHubId, fromNode);
+
+        HubGraph graph = new HubGraph(nodes);
+
+        assertThatThrownBy(() ->
+                pathFinder.findShortestPath(graph, fromHubId, toHubId))
+                .isInstanceOf(ApiException.class)
+                .hasMessageContaining(ErrorResponseCode.PATH_NOT_FOUND.getMessage());
+    }
+
+    @Test
+    @DisplayName("출발 허브가 그래프에 존재하지 않으면 예외를 발생시킨다.")
+    void throwException_whenStartHubNotExists() {
+
+        UUID fromHubId = UUID.randomUUID();
+        UUID toHubId = UUID.randomUUID();
+
+        HubNode toNode = new HubNode(toHubId, 0, 0);
+
+        Map<UUID, HubNode> nodes = new HashMap<>();
+        nodes.put(toHubId, toNode);
+
+        HubGraph graph = new HubGraph(nodes);
+
+        assertThatThrownBy(() ->
+                pathFinder.findShortestPath(graph, fromHubId, toHubId))
+                .isInstanceOf(ApiException.class)
+                .hasMessageContaining(ErrorResponseCode.PATH_NOT_FOUND.getMessage());
     }
 }

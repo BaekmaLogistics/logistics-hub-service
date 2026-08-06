@@ -29,6 +29,10 @@ public class DijkstraPathFinder implements PathFinder {
             durations.put(node.getHubId(), Integer.MAX_VALUE);
         }
 
+        if(!distances.containsKey(fromHubId) || !distances.containsKey(toHubId)){
+            throw new ApiException(ErrorResponseCode.PATH_NOT_FOUND);
+        }
+
         //시작 노드 넣기
         distances.put(fromHubId, 0.0);
         durations.put(fromHubId, 0);

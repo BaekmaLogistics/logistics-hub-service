@@ -45,9 +45,10 @@ public class HubGraphManager {
 
         for(HubRoute route : routes){
             HubNode fromNode = nodes.get(route.getFromHub().getId());
+            HubNode toNode = nodes.get(route.getToHub().getId());
 
-            if (fromNode == null) {
-                log.warn("허브를 찾을 수 없습니다. fromHubId={}", route.getFromHub().getId());
+            if (fromNode == null || toNode == null) {
+                log.warn("활성 허브를 찾을 수 없습니다. fromHubId={}", route.getFromHub().getId());
                 continue;
             }
 
