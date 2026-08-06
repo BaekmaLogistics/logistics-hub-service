@@ -1,4 +1,4 @@
-package com.sparta.logistics.application.graph;
+package com.sparta.logistics.domain.graph;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -13,5 +13,5 @@ public class Edge {
 
     private final double distance;
 
-    private final double duration;
+    private final int duration;
 }

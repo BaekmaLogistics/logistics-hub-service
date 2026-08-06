@@ -1,0 +1,13 @@
+package com.sparta.logistics.domain.model;
+
+import java.util.List;
+import java.util.UUID;
+
+public record ShortestPath(
+        List<UUID> path,
+
+        double totalDistance,
+
+        int totalDuration
+) {
+}
