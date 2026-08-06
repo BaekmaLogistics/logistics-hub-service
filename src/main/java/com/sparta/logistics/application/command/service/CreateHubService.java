@@ -23,8 +23,6 @@ public class CreateHubService implements CreateHubUseCase {
     @Override
     @Transactional
     public CreateHubResponse createHub(CreateHubCommand command){
-        // TODO: User Service 연동 후
-        // managerId 존재 여부 및 HUB_MANAGER 권한 검증
         if(hubRepository.existsByName(command.getName())){
             throw new ApiException(ErrorResponseCode.HUB_ALREADY_EXISTS);
         }
@@ -35,8 +33,7 @@ public class CreateHubService implements CreateHubUseCase {
                 command.getName(),
                 command.getAddress(),
                 coordinate.latitude(),
-                coordinate.longitude(),
-                command.getManagerId()
+                coordinate.longitude()
         );
 
         Hub savedHub = hubRepository.save(hub);

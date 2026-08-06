@@ -16,5 +16,4 @@ public class UpdateHubCommand {
 
     private final String address;
 
-    private final UUID managerId;
 }

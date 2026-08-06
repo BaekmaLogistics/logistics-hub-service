@@ -2,15 +2,18 @@ package com.sparta.logistics.presentation.command.controller;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.sparta.logistics.application.command.dto.hub.*;
+import com.sparta.logistics.application.command.usecase.AssignHubManagerUseCase;
 import com.sparta.logistics.application.command.usecase.CreateHubUseCase;
 import com.sparta.logistics.application.command.usecase.DeleteHubUseCase;
 import com.sparta.logistics.application.command.usecase.UpdateHubUseCase;
 import com.sparta.logistics.common.code.ErrorResponseCode;
 import com.sparta.logistics.common.exception.ApiException;
+import com.sparta.logistics.presentation.command.request.AssignHubManagerRequest;
 import com.sparta.logistics.presentation.command.request.CreateHubRequest;
 import com.sparta.logistics.presentation.command.request.UpdateHubRequest;
 import com.sparta.logistics.presentation.common.exception.GlobalExceptionHandler;
 import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
@@ -18,6 +21,7 @@ import org.springframework.http.MediaType;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.context.annotation.Import;
+import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 
@@ -27,12 +31,17 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.*;
+import static org.springframework.http.MediaType.APPLICATION_JSON;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
+@Tag("unit")
 @WebMvcTest(HubCommandController.class)
 @Import(GlobalExceptionHandler.class)
+@TestPropertySource(properties = {
+        "NAVER_MAP_URL=http://localhost"
+})
 class HubCommandControllerTest {
 
     @Autowired
@@ -49,6 +58,9 @@ class HubCommandControllerTest {
 
     @MockitoBean
     DeleteHubUseCase deleteHubUseCase;
+
+    @MockitoBean
+    AssignHubManagerUseCase assignHubManagerUseCase;
 
     @Test
     @DisplayName("허브 생성 성공")
@@ -75,7 +87,7 @@ class HubCommandControllerTest {
                 .thenReturn(response);
 
         mockMvc.perform(post("/api/v1/hubs")
-                        .contentType(MediaType.APPLICATION_JSON)
+                        .contentType(APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.message")
@@ -101,7 +113,7 @@ class HubCommandControllerTest {
                 .build();
 
         mockMvc.perform(post("/api/v1/hubs")
-                        .contentType(MediaType.APPLICATION_JSON)
+                        .contentType(APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isBadRequest());
 
@@ -124,7 +136,7 @@ class HubCommandControllerTest {
                 .thenThrow(new ApiException(ErrorResponseCode.HUB_ALREADY_EXISTS));
 
         mockMvc.perform(post("/api/v1/hubs")
-                        .contentType(MediaType.APPLICATION_JSON)
+                        .contentType(APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isConflict());
 
@@ -157,7 +169,7 @@ class HubCommandControllerTest {
 
         mockMvc.perform(
                         patch("/api/v1/hubs/{hubId}", hubId)
-                                .contentType(MediaType.APPLICATION_JSON)
+                                .contentType(APPLICATION_JSON)
                                 .content(objectMapper.writeValueAsString(request))
                 )
                 .andExpect(status().isOk())
@@ -183,7 +195,7 @@ class HubCommandControllerTest {
 
         mockMvc.perform(
                         patch("/api/v1/hubs/{hubId}", hubId)
-                                .contentType(MediaType.APPLICATION_JSON)
+                                .contentType(APPLICATION_JSON)
                                 .content(objectMapper.writeValueAsString(request))
                 )
                 .andExpect(status().isNotFound());
@@ -209,7 +221,7 @@ class HubCommandControllerTest {
 
         mockMvc.perform(
                         patch("/api/v1/hubs/{hubId}", hubId)
-                                .contentType(MediaType.APPLICATION_JSON)
+                                .contentType(APPLICATION_JSON)
                                 .content(objectMapper.writeValueAsString(request))
                 )
                 .andExpect(status().isBadRequest());
@@ -243,7 +255,7 @@ class HubCommandControllerTest {
 
         mockMvc.perform(
                         patch("/api/v1/hubs/{hubId}", hubId)
-                                .contentType(MediaType.APPLICATION_JSON)
+                                .contentType(APPLICATION_JSON)
                                 .content(objectMapper.writeValueAsString(request))
                 )
                 .andExpect(status().isOk());
@@ -255,7 +267,6 @@ class HubCommandControllerTest {
         assertThat(capturedCommand.getId()).isEqualTo(hubId);
         assertThat(capturedCommand.getName()).isEqualTo("서울 허브");
         assertThat(capturedCommand.getAddress()).isEqualTo("경기도 성남시");
-        assertThat(capturedCommand.getManagerId()).isEqualTo(managerId);
     }
 
     @Test
@@ -284,7 +295,7 @@ class HubCommandControllerTest {
 
         mockMvc.perform(
                         patch("/api/v1/hubs/{hubId}", hubId)
-                                .contentType(MediaType.APPLICATION_JSON)
+                                .contentType(APPLICATION_JSON)
                                 .content(objectMapper.writeValueAsString(request))
                 )
                 .andExpect(status().isOk())
@@ -313,7 +324,7 @@ class HubCommandControllerTest {
 
         mockMvc.perform(
                         patch("/api/v1/hubs/{hubId}", hubId)
-                                .contentType(MediaType.APPLICATION_JSON)
+                                .contentType(APPLICATION_JSON)
                                 .content(objectMapper.writeValueAsString(request))
                 )
                 .andExpect(status().isOk());
@@ -323,7 +334,6 @@ class HubCommandControllerTest {
 
         UpdateHubCommand capturedCommand = captor.getValue();
         assertThat(capturedCommand.getName()).isNull();
-        assertThat(capturedCommand.getManagerId()).isNull();
         assertThat(capturedCommand.getAddress()).isEqualTo("경기도 성남시");
     }
 
@@ -383,5 +393,39 @@ class HubCommandControllerTest {
 
         verify(deleteHubUseCase)
                 .deleteHub(any(DeleteHubCommand.class));
+    }
+
+    @Test
+    @DisplayName("허브 관리자를 배정한다.")
+    void assignManager_success() throws Exception {
+
+        UUID hubId = UUID.randomUUID();
+        UUID managerId = UUID.randomUUID();
+
+        AssignHubManagerRequest request =
+                AssignHubManagerRequest.builder()
+                        .managerId(managerId)
+                        .build();
+
+        AssignHubManagerResponse response =
+                AssignHubManagerResponse.builder()
+                        .hubId(hubId)
+                        .managerId(managerId)
+                        .build();
+
+        when(assignHubManagerUseCase.assign(any(AssignHubManagerCommand.class)))
+                .thenReturn(response);
+
+        mockMvc.perform(
+                        patch("/api/v1/hubs/{hubId}/manager", hubId)
+                                .contentType(APPLICATION_JSON)
+                                .content(objectMapper.writeValueAsString(request))
+                )
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.hubId").value(hubId.toString()))
+                .andExpect(jsonPath("$.data.managerId").value(managerId.toString()));
+
+        verify(assignHubManagerUseCase)
+                .assign(any(AssignHubManagerCommand.class));
     }
 }

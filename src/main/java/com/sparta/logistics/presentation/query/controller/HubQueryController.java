@@ -37,9 +37,10 @@ public class HubQueryController {
         @PageableDefault(
                 page = 0,
                 size = 10,
-                sort = "name"
+                sort = "createdAt"
         ) Pageable pageable
     ) {
+
         return GeneralResponse.toResponseEntity(
                 GeneralResponseCode.OK,
                 hubQueryUseCase.searchHubs(condition, pageable)

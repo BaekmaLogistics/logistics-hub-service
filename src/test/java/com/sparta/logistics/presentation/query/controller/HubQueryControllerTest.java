@@ -7,12 +7,14 @@ import com.sparta.logistics.common.code.ErrorResponseCode;
 import com.sparta.logistics.common.exception.ApiException;
 import com.sparta.logistics.domain.entity.Hub;
 import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
+import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 
@@ -28,7 +30,11 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
+@Tag("unit")
 @WebMvcTest(HubQueryController.class)
+@TestPropertySource(properties = {
+        "NAVER_MAP_URL=http://localhost"
+})
 class HubQueryControllerTest {
 
     @MockitoBean
@@ -47,8 +53,7 @@ class HubQueryControllerTest {
                         "서울 허브",
                         "서울특별시 송파구",
                         37.5145,
-                        127.1059,
-                        UUID.randomUUID()
+                        127.1059
                 )
         );
 
@@ -88,8 +93,7 @@ class HubQueryControllerTest {
                         "서울 허브",
                         "서울특별시 송파구",
                         37.5145,
-                        127.1059,
-                        UUID.randomUUID()
+                        127.1059
                 )
         );
 

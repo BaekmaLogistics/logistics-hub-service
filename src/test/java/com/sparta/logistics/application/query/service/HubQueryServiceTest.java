@@ -7,6 +7,7 @@ import com.sparta.logistics.common.exception.ApiException;
 import com.sparta.logistics.domain.entity.Hub;
 import com.sparta.logistics.domain.repository.HubRepository;
 import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -27,6 +28,7 @@ import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+@Tag("unit")
 @ExtendWith(MockitoExtension.class)
 class HubQueryServiceTest {
 
@@ -45,8 +47,7 @@ class HubQueryServiceTest {
                 "서울 허브",
                 "서울특별시 송파구",
                 37.5145,
-                127.1059,
-                UUID.randomUUID()
+                127.1059
         );
 
         when(hubRepository.findById(hubId))
@@ -87,8 +88,7 @@ class HubQueryServiceTest {
                 "서울 허브",
                 "서울특별시 송파구",
                 37.5145,
-                127.1059,
-                UUID.randomUUID()
+                127.1059
         );
 
         Page<Hub> hubPage = new PageImpl<>(List.of(hub), pageable, 1);
