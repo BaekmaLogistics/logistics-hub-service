@@ -15,13 +15,13 @@ public class DirectionResponse {
         if (route == null ||
                 route.getTrafasts() == null ||
                 route.getTrafasts().isEmpty()) {
-            throw new ApiException(ErrorResponseCode.DIRECTION_NOT_FOUND);
+            throw new ApiException(ErrorResponseCode.PATH_NOT_FOUND);
         }
 
         Trafast trafast = route.getTrafasts().get(0);
 
         if (trafast == null || trafast.getSummary() == null) {
-            throw new ApiException(ErrorResponseCode.DIRECTION_NOT_FOUND);
+            throw new ApiException(ErrorResponseCode.PATH_NOT_FOUND);
         }
 
         return trafast.getSummary();

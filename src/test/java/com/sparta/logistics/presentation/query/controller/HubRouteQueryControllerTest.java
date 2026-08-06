@@ -1,6 +1,8 @@
 package com.sparta.logistics.presentation.query.controller;
 
 import com.sparta.logistics.application.query.dto.HubRouteDetailResponse;
+import com.sparta.logistics.application.query.dto.ShortestPathResponse;
+import com.sparta.logistics.application.query.usecase.FindShortestPathUseCase;
 import com.sparta.logistics.application.query.usecase.HubRouteQueryUseCase;
 import com.sparta.logistics.domain.entity.Hub;
 import com.sparta.logistics.domain.entity.HubRoute;
@@ -38,6 +40,9 @@ class HubRouteQueryControllerTest {
 
     @MockitoBean
     private HubRouteQueryUseCase hubRouteQueryUseCase;
+
+    @MockitoBean
+    private FindShortestPathUseCase findShortestPathUseCase;
 
     @Autowired
     private MockMvc mockMvc;
@@ -118,5 +123,62 @@ class HubRouteQueryControllerTest {
                 any(),
                 any(Pageable.class)
         );
+    }
+
+    @Test
+    @DisplayName("최단 경로를 조회한다.")
+    void findShortestPath() throws Exception {
+        UUID fromHubId = UUID.randomUUID();
+        UUID middleHubId = UUID.randomUUID();
+        UUID toHubId = UUID.randomUUID();
+
+        ShortestPathResponse response =
+                new ShortestPathResponse(
+                        List.of(fromHubId, middleHubId, toHubId),
+                        120.5,
+                        95
+                );
+
+        when(findShortestPathUseCase.findShortestPath(
+                fromHubId,
+                toHubId
+        )).thenReturn(response);
+
+        // when & then
+        mockMvc.perform(get("/api/v1/hub-routes/shortest")
+                        .param("fromHubId", fromHubId.toString())
+                        .param("toHubId", toHubId.toString()))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.hubIds[0]")
+                        .value(fromHubId.toString()))
+                .andExpect(jsonPath("$.data.hubIds[1]")
+                        .value(middleHubId.toString()))
+                .andExpect(jsonPath("$.data.hubIds[2]")
+                        .value(toHubId.toString()))
+                .andExpect(jsonPath("$.data.totalDistance")
+                        .value(120.5))
+                .andExpect(jsonPath("$.data.totalDuration")
+                        .value(95));
+
+        verify(findShortestPathUseCase)
+                .findShortestPath(fromHubId, toHubId);
+    }
+
+    @Test
+    @DisplayName("fromHubId가 없으면 400을 반환한다.")
+    void fail_whenFromHubIdIsMissing() throws Exception {
+
+        mockMvc.perform(get("/api/v1/hub-routes/shortest")
+                        .param("toHubId", UUID.randomUUID().toString()))
+                .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    @DisplayName("toHubId가 없으면 400을 반환한다.")
+    void fail_whenToHubIdIsMissing() throws Exception {
+
+        mockMvc.perform(get("/api/v1/hub-routes/shortest")
+                        .param("fromHubId", UUID.randomUUID().toString()))
+                .andExpect(status().isBadRequest());
     }
 }
