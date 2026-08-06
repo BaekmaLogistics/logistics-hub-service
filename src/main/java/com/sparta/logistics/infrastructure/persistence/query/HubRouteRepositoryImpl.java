@@ -83,7 +83,9 @@ public class HubRouteRepositoryImpl implements HubRouteRepositoryCustom {
 
     @Override
     public Page<HubRoute> search(
-            HubRouteSearchCondition condition,
+            String keyword,
+            UUID fromHubId,
+            UUID toHubId,
             Pageable pageable
     ) {
         List<HubRoute> content = queryFactory
@@ -92,9 +94,9 @@ public class HubRouteRepositoryImpl implements HubRouteRepositoryCustom {
                 .join(hubRoute.toHub, toHub)
                 .where(
                         notDeleted(),
-                        keywordContains(condition.getKeyword()),
-                        fromHubIdEq(condition.getFromHubId()),
-                        toHubIdEq(condition.getToHubId())
+                        keywordContains(keyword),
+                        fromHubIdEq(fromHubId),
+                        toHubIdEq(toHubId)
                 )
                 .orderBy(getOrderSpecifier(pageable))
                 .offset(pageable.getOffset())
@@ -107,9 +109,10 @@ public class HubRouteRepositoryImpl implements HubRouteRepositoryCustom {
                 .join(hubRoute.fromHub, fromHub)
                 .join(hubRoute.toHub, toHub)
                 .where(
-                        keywordContains(condition.getKeyword()),
-                        fromHubIdEq(condition.getFromHubId()),
-                        toHubIdEq(condition.getToHubId())
+                        notDeleted(),
+                        keywordContains(keyword),
+                        fromHubIdEq(fromHubId),
+                        toHubIdEq(toHubId)
                 );
 
         return PageableExecutionUtils.getPage(

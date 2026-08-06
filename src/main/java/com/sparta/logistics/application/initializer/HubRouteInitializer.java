@@ -2,13 +2,17 @@ package com.sparta.logistics.application.initializer;
 
 import com.sparta.logistics.application.command.dto.hubroute.CreateHubRouteCommand;
 import com.sparta.logistics.application.command.usecase.CreateHubRouteUseCase;
+import com.sparta.logistics.application.common.service.DirectionService;
+import com.sparta.logistics.application.graph.HubGraphManager;
 import com.sparta.logistics.application.initializer.seed.HubConnectionSeed;
 import com.sparta.logistics.application.initializer.seed.HubConnectionSeeds;
 import com.sparta.logistics.common.code.ErrorResponseCode;
 import com.sparta.logistics.common.exception.ApiException;
 import com.sparta.logistics.domain.entity.Hub;
+import com.sparta.logistics.domain.entity.HubRoute;
 import com.sparta.logistics.domain.repository.HubRepository;
 import com.sparta.logistics.domain.repository.HubRouteRepository;
+import com.sparta.logistics.infrastructure.feign.dto.direction.RouteInfo;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.ApplicationArguments;
@@ -31,7 +35,8 @@ public class HubRouteInitializer implements ApplicationRunner {
 
     private final HubRepository hubRepository;
     private final HubRouteRepository hubRouteRepository;
-    private final CreateHubRouteUseCase createHubRouteUseCase;
+    private final DirectionService directionService;
+    private final HubGraphManager hubGraphManager;
 
     private void createRoute(Hub fromHub, Hub toHub){
 
@@ -42,12 +47,16 @@ public class HubRouteInitializer implements ApplicationRunner {
             return;
         }
 
-        createHubRouteUseCase.create(
-                CreateHubRouteCommand.builder()
-                        .fromHubId(fromHub.getId())
-                        .toHubId(toHub.getId())
-                        .build()
-        );
+        RouteInfo routeInfo = directionService.getRoute(fromHub, toHub);
+
+        HubRoute hubRoute = HubRoute.builder()
+                .fromHub(fromHub)
+                .toHub(toHub)
+                .distance(routeInfo.getDistance())
+                .duration(routeInfo.getDuration())
+                .build();
+
+        hubRouteRepository.save(hubRoute);
     }
 
     private Hub getHub(Map<String, Hub> hubMap, String hubName) {
@@ -90,5 +99,7 @@ public class HubRouteInitializer implements ApplicationRunner {
             }
 
         }
+
+        hubGraphManager.reloadGraph();
     }
 }

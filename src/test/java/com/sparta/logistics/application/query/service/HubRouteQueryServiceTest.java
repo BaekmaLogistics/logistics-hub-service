@@ -66,7 +66,7 @@ class HubRouteQueryServiceTest {
         Page<HubRoute> page =
                 new PageImpl<>(List.of(hubRoute));
 
-        when(hubRouteRepository.search(any(), any()))
+        when(hubRouteRepository.search(any(), any(), any(), any()))
                 .thenReturn(page);
 
         Page<HubRouteDetailResponse> result =
@@ -93,7 +93,7 @@ class HubRouteQueryServiceTest {
                 .isEqualTo(42);
 
         verify(hubRouteRepository)
-                .search(any(), any());
+                .search(any(), any(), any(), any());
     }
 
 }

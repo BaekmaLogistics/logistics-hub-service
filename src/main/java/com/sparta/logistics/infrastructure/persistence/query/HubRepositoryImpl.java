@@ -82,6 +82,7 @@ public class HubRepositoryImpl implements HubRepositoryCustom {
                 .select(hub.count())
                 .from(hub)
                 .where(
+                        notDeleted(),
                         nameContains(name),
                         addressContains(address)
                 );

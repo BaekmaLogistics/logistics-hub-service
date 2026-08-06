@@ -20,7 +20,12 @@ public class HubRouteQueryService implements HubRouteQueryUseCase {
             HubRouteSearchCondition condition,
             Pageable pageable
     ){
-        return hubRouteRepository.search(condition, pageable)
+        return hubRouteRepository.search(
+                condition.getKeyword(),
+                condition.getFromHubId(),
+                condition.getToHubId(),
+                pageable
+                )
                 .map(HubRouteDetailResponse::from);
     }
 }

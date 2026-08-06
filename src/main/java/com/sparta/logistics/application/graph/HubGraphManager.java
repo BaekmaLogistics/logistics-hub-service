@@ -18,11 +18,6 @@ public class HubGraphManager {
 
     private volatile HubGraph hubGraph;
 
-    @PostConstruct
-    public void initialize(){
-        reloadGraph();
-    }
-
     public HubGraph getGraph() {
         return hubGraph;
     }
