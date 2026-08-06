@@ -1,10 +1,7 @@
 package com.sparta.logistics.domain.entity;
 
 import com.sparta.logistics.infrastructure.persistence.jpa.entity.BaseUpdatableEntity;
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.Table;
-import jakarta.persistence.UniqueConstraint;
+import jakarta.persistence.*;
 import lombok.AccessLevel;
 import lombok.Builder;
 import lombok.Getter;
@@ -23,11 +20,13 @@ import java.util.UUID;
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class HubRoute extends BaseUpdatableEntity {
 
-    @Column(name = "from_hub_id", nullable = false)
-    private UUID fromHubId;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "from_hub_id", nullable = false)
+    private Hub fromHub;
 
-    @Column(name = "to_hub_id", nullable = false)
-    private UUID toHubId;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "to_hub_id", nullable = false)
+    private Hub toHub;
 
     @Column(nullable = false)
     private Double distance;
@@ -37,13 +36,13 @@ public class HubRoute extends BaseUpdatableEntity {
 
     @Builder
     private HubRoute(
-            UUID fromHubId,
-            UUID toHubId,
+            Hub fromHub,
+            Hub toHub,
             Double distance,
             Integer duration
     ) {
-        this.fromHubId = fromHubId;
-        this.toHubId = toHubId;
+        this.fromHub = fromHub;
+        this.toHub = toHub;
         this.distance = distance;
         this.duration = duration;
     }

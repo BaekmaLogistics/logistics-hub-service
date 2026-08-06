@@ -35,9 +35,9 @@ public class HubRouteInitializer implements ApplicationRunner {
 
     private void createRoute(Hub fromHub, Hub toHub){
 
-        if(hubRouteRepository.existsByFromHubIdAndToHubId(
-                fromHub.getId(),
-                toHub.getId()
+        if(hubRouteRepository.existsByFromHubAndToHub(
+                fromHub,
+                toHub
         )){
             return;
         }

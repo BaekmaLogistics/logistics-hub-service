@@ -37,28 +37,41 @@ class HubGraphManagerTest {
         UUID incheonId = UUID.randomUUID();
         UUID chungbukId = UUID.randomUUID();
 
+        Hub seoul = mock(Hub.class);
+        Hub gyeonggi = mock(Hub.class);
+        Hub incheon = mock(Hub.class);
+        Hub chungbuk = mock(Hub.class);
+
+        when(seoul.getId()).thenReturn(seoulId);
+        when(gyeonggi.getId()).thenReturn(gyeonggiId);
+        when(incheon.getId()).thenReturn(incheonId);
+        when(chungbuk.getId()).thenReturn(chungbukId);
+
         HubRoute route1 = mock(HubRoute.class);
 
-        when(route1.getFromHubId()).thenReturn(seoulId);
-        when(route1.getToHubId()).thenReturn(gyeonggiId);
+        when(route1.getFromHub()).thenReturn(seoul);
+        when(route1.getToHub()).thenReturn(gyeonggi);
+
         when(route1.getDistance()).thenReturn(30.0);
         when(route1.getDuration()).thenReturn(40);
 
         HubRoute route2 = mock(HubRoute.class);
 
-        when(route2.getFromHubId()).thenReturn(seoulId);
-        when(route2.getToHubId()).thenReturn(incheonId);
+        when(route2.getFromHub()).thenReturn(seoul);
+        when(route2.getToHub()).thenReturn(incheon);
+
         when(route2.getDistance()).thenReturn(60.0);
         when(route2.getDuration()).thenReturn(50);
 
         HubRoute route3 = mock(HubRoute.class);
 
-        when(route3.getFromHubId()).thenReturn(gyeonggiId);
-        when(route3.getToHubId()).thenReturn(chungbukId);
+        when(route3.getFromHub()).thenReturn(gyeonggi);
+        when(route3.getToHub()).thenReturn(chungbuk);
+
         when(route3.getDistance()).thenReturn(80.0);
         when(route3.getDuration()).thenReturn(60);
 
-        when(hubRouteRepository.findAll())
+        when(hubRouteRepository.findAllByDeletedAtIsNull())
                 .thenReturn(List.of(route1, route2, route3));
 
         hubGraphManager.reloadGraph();

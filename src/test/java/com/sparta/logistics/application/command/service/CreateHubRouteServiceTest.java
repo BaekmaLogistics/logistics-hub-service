@@ -81,15 +81,15 @@ class CreateHubRouteServiceTest {
         when(hubRepository.findById(toHubId))
                 .thenReturn(Optional.of(toHub));
 
-        when(hubRouteRepository.existsByFromHubIdAndToHubId(fromHubId, toHubId))
+        when(hubRouteRepository.existsByFromHubAndToHub(fromHub, toHub))
                 .thenReturn(false);
 
         when(directionService.getRoute(fromHub, toHub))
                 .thenReturn(routeInfo);
 
         HubRoute savedHubRoute = HubRoute.builder()
-                .fromHubId(fromHubId)
-                .toHubId(toHubId)
+                .fromHub(fromHub)
+                .toHub(toHub)
                 .distance(35.8)
                 .duration(42)
                 .build();
@@ -217,12 +217,34 @@ class CreateHubRouteServiceTest {
         UUID fromHubId = UUID.randomUUID();
         UUID toHubId = UUID.randomUUID();
 
+        Hub fromHub = Hub.builder()
+                .name("서울")
+                .latitude(37.514575)
+                .longitude(127.105399)
+                .build();
+
+        ReflectionTestUtils.setField(fromHub, "id", fromHubId);
+
+        Hub toHub = Hub.builder()
+                .name("경기북부")
+                .latitude(37.658359)
+                .longitude(126.832020)
+                .build();
+
+        ReflectionTestUtils.setField(toHub, "id", toHubId);
+
         CreateHubRouteCommand command = CreateHubRouteCommand.builder()
                 .fromHubId(fromHubId)
                 .toHubId(toHubId)
                 .build();
 
-        when(hubRouteRepository.existsByFromHubIdAndToHubId(fromHubId, toHubId))
+        when(hubRepository.findById(fromHubId))
+                .thenReturn(Optional.of(fromHub));
+
+        when(hubRepository.findById(toHubId))
+                .thenReturn(Optional.of(toHub));
+
+        when(hubRouteRepository.existsByFromHubAndToHub(fromHub, toHub))
                 .thenReturn(true);
 
         ApiException exception = assertThrows(
@@ -233,7 +255,7 @@ class CreateHubRouteServiceTest {
         assertThat(exception.getResponseCode())
                 .isEqualTo(ErrorResponseCode.HUB_ROUTE_ALREADY_EXISTS);
 
-        verify(hubRouteRepository).existsByFromHubIdAndToHubId(fromHubId, toHubId);
+        verify(hubRouteRepository).existsByFromHubAndToHub(fromHub, toHub);
         verify(directionService, never()).getRoute(any(), any());
         verify(hubRouteRepository, never()).save(any());
     }

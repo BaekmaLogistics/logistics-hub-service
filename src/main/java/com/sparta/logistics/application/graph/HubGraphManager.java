@@ -28,15 +28,15 @@ public class HubGraphManager {
     }
 
     public void reloadGraph(){
-        List<HubRoute> routes = hubRouteRepository.findAll();
+        List<HubRoute> routes = hubRouteRepository.findAllByDeletedAtIsNull();
         Map<UUID, List<Edge>> adjacencyList = new HashMap<>();
 
         for(HubRoute route : routes){
-            adjacencyList.computeIfAbsent(route.getFromHubId(),
+            adjacencyList.computeIfAbsent(route.getFromHub().getId(),
                     id -> new ArrayList<>())
                     .add(
                             new Edge(
-                                    route.getToHubId(),
+                                    route.getToHub().getId(),
                                     route.getDistance(),
                                     route.getDuration()
                             )

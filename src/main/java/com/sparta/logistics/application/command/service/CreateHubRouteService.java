@@ -26,12 +26,9 @@ public class CreateHubRouteService implements CreateHubRouteUseCase {
     private final HubRouteRepository hubRouteRepository;
     private final DirectionService directionService;
 
-    private void validate(CreateHubRouteCommand command){
-        if(command.getFromHubId().equals(command.getToHubId())){
-            throw new ApiException(ErrorResponseCode.INVALID_HUB_ROUTE);
-        }
+    private void validate(Hub fromHub, Hub toHub) {
 
-        if(hubRouteRepository.existsByFromHubIdAndToHubId(command.getFromHubId(), command.getToHubId())){
+        if (hubRouteRepository.existsByFromHubAndToHub(fromHub, toHub)) {
             throw new ApiException(ErrorResponseCode.HUB_ROUTE_ALREADY_EXISTS);
         }
     }
@@ -45,16 +42,20 @@ public class CreateHubRouteService implements CreateHubRouteUseCase {
     @Override
     public CreateHubRouteResponse create(CreateHubRouteCommand command){
 
-        validate(command);
+        if (command.getFromHubId().equals(command.getToHubId())) {
+            throw new ApiException(ErrorResponseCode.INVALID_HUB_ROUTE);
+        }
 
         Hub fromHub = findHub(command.getFromHubId());
         Hub toHub = findHub(command.getToHubId());
 
+        validate(fromHub, toHub);
+
         RouteInfo routeInfo = directionService.getRoute(fromHub, toHub);
 
         HubRoute hubRoute = HubRoute.builder()
-                .fromHubId(fromHub.getId())
-                .toHubId(toHub.getId())
+                .fromHub(fromHub)
+                .toHub(toHub)
                 .distance(routeInfo.getDistance())
                 .duration(routeInfo.getDuration())
                 .build();
@@ -63,8 +64,8 @@ public class CreateHubRouteService implements CreateHubRouteUseCase {
 
             return CreateHubRouteResponse.builder()
                     .hubRouteId(savedHubRouted.getId())
-                    .fromHubId(savedHubRouted.getFromHubId())
-                    .toHubId(savedHubRouted.getToHubId())
+                    .fromHubId(savedHubRouted.getFromHub().getId())
+                    .toHubId(savedHubRouted.getToHub().getId())
                     .distance(savedHubRouted.getDistance())
                     .duration(savedHubRouted.getDuration())
                     .build();
