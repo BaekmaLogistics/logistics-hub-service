@@ -4,6 +4,7 @@ import com.sparta.logistics.application.command.dto.hubinventory.UpdateHubInvent
 import com.sparta.logistics.application.command.dto.hubinventory.UpdateHubInventoryResponse;
 import com.sparta.logistics.common.code.ErrorResponseCode;
 import com.sparta.logistics.common.exception.ApiException;
+import com.sparta.logistics.domain.entity.Hub;
 import com.sparta.logistics.domain.entity.HubInventory;
 import com.sparta.logistics.domain.repository.HubInventoryRepository;
 import org.junit.jupiter.api.DisplayName;
@@ -43,8 +44,17 @@ class UpdateHubInventoryServiceTest {
         UUID hubId = UUID.randomUUID();
         UUID productId = UUID.randomUUID();
 
+        Hub hub = Hub.builder()
+                .name("서울 허브")
+                .address("서울특별시")
+                .latitude(37.1)
+                .longitude(127.1)
+                .build();
+
+        ReflectionTestUtils.setField(hub, "id", hubId);
+
         HubInventory inventory = HubInventory.builder()
-                .hubId(hubId)
+                .hub(hub)
                 .productId(productId)
                 .quantity(30)
                 .build();
@@ -114,8 +124,15 @@ class UpdateHubInventoryServiceTest {
         // given
         UUID inventoryId = UUID.randomUUID();
 
+        Hub hub = Hub.builder()
+                .name("서울 허브")
+                .address("서울특별시")
+                .latitude(37.1)
+                .longitude(127.1)
+                .build();
+
         HubInventory inventory = HubInventory.builder()
-                .hubId(UUID.randomUUID())
+                .hub(hub)
                 .productId(UUID.randomUUID())
                 .quantity(30)
                 .build();
@@ -154,8 +171,15 @@ class UpdateHubInventoryServiceTest {
         // given
         UUID inventoryId = UUID.randomUUID();
 
+        Hub hub = Hub.builder()
+                .name("서울 허브")
+                .address("서울특별시")
+                .latitude(37.1)
+                .longitude(127.1)
+                .build();
+
         HubInventory inventory = HubInventory.builder()
-                .hubId(UUID.randomUUID())
+                .hub(hub)
                 .productId(UUID.randomUUID())
                 .quantity(30)
                 .build();

@@ -36,12 +36,12 @@ public class CreateHubInventoryService implements CreateHubInventoryUseCase {
         // 존재하지 않거나 삭제된 상품의 재고 등록 방지
 
         // 동일 허브 + 상품의 활성 재고 중복 확인
-        if(hubInventoryRepository.existsByHubIdAndProductIdAndDeletedAtIsNull(command.getHubId(), command.getProductId())){
+        if(hubInventoryRepository.existsByHubAndProductIdAndDeletedAtIsNull(hub, command.getProductId())){
             throw new ApiException(ErrorResponseCode.HUB_INVENTORY_ALREADY_EXISTS);
         }
 
         HubInventory inventory = HubInventory.builder()
-                .hubId(command.getHubId())
+                .hub(hub)
                 .productId(command.getProductId())
                 .quantity(command.getQuantity())
                 .build();
