@@ -94,4 +94,22 @@ public class HubInventory extends BaseUpdatableEntity {
 
         this.safetyStock = safetyStock;
     }
+
+    public void updateQuantity(int quantity){
+        if(quantity<0){
+            throw new ApiException(
+                    ErrorResponseCode.INVALID_STOCK_QUANTITY
+            );
+        }
+
+        this.quantity = quantity;
+    }
+
+    public boolean isLowStock() {
+        return this.quantity <= this.safetyStock;
+    }
+
+    public boolean isDeleted(){
+        return getDeletedAt() != null;
+    }
 }
