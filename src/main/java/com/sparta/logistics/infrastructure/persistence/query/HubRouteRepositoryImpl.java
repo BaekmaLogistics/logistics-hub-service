@@ -22,6 +22,7 @@ import org.springframework.util.StringUtils;
 
 import java.util.List;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 @Repository
 @RequiredArgsConstructor
@@ -40,7 +41,7 @@ public class HubRouteRepositoryImpl implements HubRouteRepositoryCustom {
                 ? pageable.getSort()
                 : Sort.by(Sort.Order.desc("createdAt"));
 
-        return sort.stream()
+        List<OrderSpecifier<?>> orderSpecifiers = sort.stream()
                 .map(order -> {
                     boolean asc = order.isAscending();
 
@@ -62,9 +63,11 @@ public class HubRouteRepositoryImpl implements HubRouteRepositoryCustom {
                                 throw new ApiException(ErrorResponseCode.INVALID_SORT_PROPERTY);
                     };
                 })
-                .toArray(OrderSpecifier<?>[]::new);
+                .collect(Collectors.toList());
 
+        orderSpecifiers.add(hubRoute.id.asc());
 
+        return orderSpecifiers.toArray(OrderSpecifier<?>[]::new);
     }
 
     private BooleanExpression notDeleted() {

@@ -18,6 +18,7 @@ import org.springframework.stereotype.Repository;
 
 import java.util.List;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 @Repository
 @RequiredArgsConstructor
@@ -35,7 +36,7 @@ public class HubInventoryRepositoryImpl implements HubInventoryRepositoryCustom 
 
 
 
-        return sort.stream()
+        List<OrderSpecifier<?>> orderSpecifiers = sort.stream()
                 .map(order -> {
                     boolean asc = order.isAscending();
 
@@ -58,7 +59,11 @@ public class HubInventoryRepositoryImpl implements HubInventoryRepositoryCustom 
                                 );
                     };
                 })
-                .toArray(OrderSpecifier<?>[]::new);
+                .collect(Collectors.toList());
+
+        orderSpecifiers.add(hubInventory.id.asc());
+
+        return orderSpecifiers.toArray(OrderSpecifier<?>[]::new);
     }
 
     private BooleanExpression notDeleted(){

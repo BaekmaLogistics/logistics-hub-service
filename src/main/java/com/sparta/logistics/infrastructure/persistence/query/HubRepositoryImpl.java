@@ -17,6 +17,7 @@ import org.springframework.stereotype.Repository;
 import org.springframework.util.StringUtils;
 
 import java.util.List;
+import java.util.stream.Collectors;
 
 import static com.sparta.logistics.domain.entity.QHub.hub;
 
@@ -31,7 +32,7 @@ public class HubRepositoryImpl implements HubRepositoryCustom {
         Sort sort = pageable.getSort().isSorted()
                 ? pageable.getSort() : Sort.by(Sort.Order.desc("createdAt"));
 
-        return sort.stream()
+        List<OrderSpecifier<?>> orderSpecifiers = sort.stream()
                 .map(order -> {
                     boolean asc = order.isAscending();
 
@@ -46,7 +47,11 @@ public class HubRepositoryImpl implements HubRepositoryCustom {
                                 throw new ApiException(ErrorResponseCode.INVALID_SORT_PROPERTY);
                     };
                 })
-                .toArray(OrderSpecifier<?>[]::new);
+                .collect(Collectors.toList());
+
+        orderSpecifiers.add(hub.id.asc());
+
+        return orderSpecifiers.toArray(OrderSpecifier<?>[]::new);
     }
 
     private BooleanExpression notDeleted() {
