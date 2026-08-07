@@ -48,6 +48,10 @@ public class CreateHubInventoryService implements CreateHubInventoryUseCase {
 
         HubInventory savedInventory = hubInventoryRepository.save(inventory);
 
+        // TODO: RabbitMQ 연동 시 생성된 재고가 안전재고 이하인 경우
+        //       InventoryLowEvent 발행
+
+
         return CreateHubInventoryResponse.from(savedInventory);
     }
 }
