@@ -27,23 +27,26 @@ public class HubRepositoryImpl implements HubRepositoryCustom {
 
     private final JPAQueryFactory queryFactory;
 
-    private OrderSpecifier<?> getOrderSpecifier(Pageable pageable){
-        Sort.Order order = pageable.getSort().stream()
-                .findFirst()
-                .orElse(Sort.Order.desc("createdAt"));
+    private OrderSpecifier<?>[] getOrderSpecifier(Pageable pageable){
+        Sort sort = pageable.getSort().isSorted()
+                ? pageable.getSort() : Sort.by(Sort.Order.desc("createdAt"));
 
-        boolean asc = order.isAscending();
+        return sort.stream()
+                .map(order -> {
+                    boolean asc = order.isAscending();
 
-        return switch (order.getProperty()) {
-            case "createdAt" ->
-                    asc ? hub.createdAt.asc() : hub.createdAt.desc();
+                    return switch (order.getProperty()) {
+                        case "createdAt" ->
+                                asc ? hub.createdAt.asc() : hub.createdAt.desc();
 
-            case "name" ->
-                    asc ? hub.name.asc() : hub.name.desc();
+                        case "name" ->
+                                asc ? hub.name.asc() : hub.name.desc();
 
-            default ->
-                    throw new ApiException(ErrorResponseCode.INVALID_SORT_PROPERTY);
-        };
+                        default ->
+                                throw new ApiException(ErrorResponseCode.INVALID_SORT_PROPERTY);
+                    };
+                })
+                .toArray(OrderSpecifier<?>[]::new);
     }
 
     private BooleanExpression notDeleted() {

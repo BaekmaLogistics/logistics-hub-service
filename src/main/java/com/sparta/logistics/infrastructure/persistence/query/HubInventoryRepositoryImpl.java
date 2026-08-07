@@ -27,31 +27,38 @@ public class HubInventoryRepositoryImpl implements HubInventoryRepositoryCustom 
 
     private final QHubInventory hubInventory = QHubInventory.hubInventory;
 
-    private OrderSpecifier<?> getOrderSpecifier(Pageable pageable){
+    private OrderSpecifier<?>[] getOrderSpecifier(Pageable pageable){
 
-        Sort.Order order = pageable.getSort().stream()
-                .findFirst()
-                .orElse(Sort.Order.desc("createdAt"));
+        Sort sort = pageable.getSort().isSorted()
+                ? pageable.getSort()
+                : Sort.by(Sort.Order.desc("createdAt"));
 
-        boolean asc = order.isAscending();
 
-        return switch (order.getProperty()){
-            case "createdAt" ->
-                asc ? hubInventory.createdAt.asc()
-                        :hubInventory.createdAt.desc();
-            case "quantity" ->
-                asc ? hubInventory.quantity.asc()
-                        :hubInventory.quantity.desc();
 
-            case "safetyStock" ->
-                asc ? hubInventory.safetyStock.asc()
-                        :hubInventory.safetyStock.desc();
+        return sort.stream()
+                .map(order -> {
+                    boolean asc = order.isAscending();
 
-            default ->
-                throw new ApiException(
-                        ErrorResponseCode.INVALID_SORT_PROPERTY
-                );
-        };
+                    return switch (order.getProperty()) {
+                        case "createdAt" ->
+                                asc ? hubInventory.createdAt.asc()
+                                        : hubInventory.createdAt.desc();
+
+                        case "quantity" ->
+                                asc ? hubInventory.quantity.asc()
+                                        : hubInventory.quantity.desc();
+
+                        case "safetyStock" ->
+                                asc ? hubInventory.safetyStock.asc()
+                                        : hubInventory.safetyStock.desc();
+
+                        default ->
+                                throw new ApiException(
+                                        ErrorResponseCode.INVALID_SORT_PROPERTY
+                                );
+                    };
+                })
+                .toArray(OrderSpecifier<?>[]::new);
     }
 
     private BooleanExpression notDeleted(){
