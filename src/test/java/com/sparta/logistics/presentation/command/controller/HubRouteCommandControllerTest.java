@@ -1,10 +1,8 @@
 package com.sparta.logistics.presentation.command.controller;
 
-import com.sparta.logistics.application.command.dto.hubroute.CreateHubRouteCommand;
-import com.sparta.logistics.application.command.dto.hubroute.CreateHubRouteResponse;
-import com.sparta.logistics.application.command.dto.hubroute.UpdateHubRouteCommand;
-import com.sparta.logistics.application.command.dto.hubroute.UpdateHubRouteResponse;
+import com.sparta.logistics.application.command.dto.hubroute.*;
 import com.sparta.logistics.application.command.usecase.CreateHubRouteUseCase;
+import com.sparta.logistics.application.command.usecase.DeleteHubRouteUseCase;
 import com.sparta.logistics.application.command.usecase.UpdateHubRouteUseCase;
 import com.sparta.logistics.common.code.ErrorResponseCode;
 import com.sparta.logistics.common.exception.ApiException;
@@ -26,9 +24,8 @@ import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.when;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 import static org.mockito.Mockito.verify;
 
@@ -50,6 +47,9 @@ class HubRouteCommandControllerTest {
 
     @MockitoBean
     private UpdateHubRouteUseCase updateHubRouteUseCase;
+
+    @MockitoBean
+    private DeleteHubRouteUseCase deleteHubRouteUseCase;
 
     @Test
     @DisplayName("허브 연결 생성")
@@ -152,5 +152,21 @@ class HubRouteCommandControllerTest {
 
         verify(updateHubRouteUseCase)
                 .updateHubRoute(any(UpdateHubRouteCommand.class));
+    }
+
+    @Test
+    @DisplayName("허브 경로 삭제 성공")
+    void deleteHubRoute_success() throws Exception {
+        // given
+        UUID hubRouteId = UUID.randomUUID();
+
+        // when & then
+        mockMvc.perform(
+                        delete("/api/v1/hub-routes/{hubRouteId}", hubRouteId)
+                )
+                .andExpect(status().isOk());
+
+        verify(deleteHubRouteUseCase)
+                .deleteHubRoute(any(DeleteHubRouteCommand.class));
     }
 }
