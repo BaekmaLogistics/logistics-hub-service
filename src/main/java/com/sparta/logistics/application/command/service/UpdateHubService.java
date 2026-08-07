@@ -37,7 +37,7 @@ public class UpdateHubService implements UpdateHubUseCase {
             hub.updateName(command.getName());
         }
 
-        if(!Objects.equals(hub.getAddress(), command.getAddress())){
+        if(command.getAddress() != null && !Objects.equals(hub.getAddress(), command.getAddress())){
             Coordinate coordinate = geocodingService.getCoordinate(command.getAddress());
 
             hub.updateAddress(
@@ -45,6 +45,8 @@ public class UpdateHubService implements UpdateHubUseCase {
                     coordinate.latitude(),
                     coordinate.longitude()
             );
+
+            //TODO: 허브 좌표 변경 시 허브와 연결된 루트의 거리, 시간 재계한 및 캐시 무효화
         }
 
         return UpdateHubResponse.from(hub);

@@ -6,7 +6,9 @@ import com.sparta.logistics.application.port.ShortestPathCache;
 import com.sparta.logistics.domain.model.ShortestPath;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.redis.core.Cursor;
 import org.springframework.data.redis.core.RedisTemplate;
+import org.springframework.data.redis.core.ScanOptions;
 import org.springframework.stereotype.Component;
 
 import java.time.Duration;
@@ -63,6 +65,16 @@ public class RedisShortestPathCache implements ShortestPathCache {
     @Override
     public void evictAll(){
 
+        ScanOptions options = ScanOptions.scanOptions()
+                .match(KEY_PREFIX+"*")
+                .count(100)
+                .build();
+
+        try(Cursor<String> cursor = redisTemplate.scan(options)){
+            while(cursor.hasNext()){
+                redisTemplate.delete(cursor.next());
+            }
+        }
     }
 
     private String generateKey(UUID fromHubId, UUID toHubId){
