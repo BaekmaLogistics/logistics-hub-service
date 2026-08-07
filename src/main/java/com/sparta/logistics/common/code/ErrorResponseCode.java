@@ -28,7 +28,9 @@ public enum ErrorResponseCode implements ApiResponseCode {
     INVALID_SORT_PROPERTY(HttpStatus.BAD_REQUEST, "HUB_0014", "지원하지 않는 정렬 기준입니다."),
     HUB_ROUTE_ALREADY_DELETED(HttpStatus.BAD_REQUEST, "HUB_0015", "삭제된 허브 경로입니다."),
     INVALID_HUB_ROUTE_UPDATE(HttpStatus.BAD_REQUEST, "HUB_0016", "수정할 허브 경로 정보가 없습니다."),
-    HUB_INVENTORY_ALREADY_EXISTS(HttpStatus.CONFLICT, "HUB_0017", "해당 허브에 이미 등록된 상품 재고입니다.");
+    HUB_INVENTORY_ALREADY_EXISTS(HttpStatus.CONFLICT, "HUB_0017", "해당 허브에 이미 등록된 상품 재고입니다."),
+    HUB_INVENTORY_NOT_FOUND(HttpStatus.NOT_FOUND, "HUB_0018", "허브 재고를 찾을 수 없습니다."),
+    HUB_INVENTORY_ALREADY_DELETED(HttpStatus.BAD_REQUEST, "HUB_0019", "이미 삭제된 허브 재고입니다.");
 
     private final HttpStatus status;
     private final String errorCode;

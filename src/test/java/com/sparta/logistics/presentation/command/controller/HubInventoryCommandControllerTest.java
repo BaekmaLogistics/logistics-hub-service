@@ -3,7 +3,11 @@ package com.sparta.logistics.presentation.command.controller;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.sparta.logistics.application.command.dto.hubinventory.CreateHubInventoryCommand;
 import com.sparta.logistics.application.command.dto.hubinventory.CreateHubInventoryResponse;
+import com.sparta.logistics.application.command.dto.hubinventory.UpdateHubInventoryCommand;
+import com.sparta.logistics.application.command.dto.hubinventory.UpdateHubInventoryResponse;
 import com.sparta.logistics.application.command.usecase.CreateHubInventoryUseCase;
+import com.sparta.logistics.application.command.usecase.UpdateHubInventoryUseCase;
+import com.sparta.logistics.common.code.ErrorResponseCode;
 import com.sparta.logistics.presentation.command.request.CreateHubInventoryRequest;
 import com.sparta.logistics.presentation.common.exception.GlobalExceptionHandler;
 import org.junit.jupiter.api.DisplayName;
@@ -23,6 +27,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -43,6 +48,9 @@ class HubInventoryCommandControllerTest {
 
     @MockitoBean
     private CreateHubInventoryUseCase createHubInventoryUseCase;
+
+    @MockitoBean
+    private UpdateHubInventoryUseCase updateHubInventoryUseCase;
 
     @Test
     @DisplayName("허브 재고 등록 성공")
@@ -117,5 +125,75 @@ class HubInventoryCommandControllerTest {
                 .andExpect(status().isBadRequest());
 
         verifyNoInteractions(createHubInventoryUseCase);
+    }
+
+    @Test
+    @DisplayName("허브 재고 수량 수정 성공")
+    void updateHubInventory_success() throws Exception {
+        // given
+        UUID inventoryId = UUID.randomUUID();
+        UUID hubId = UUID.randomUUID();
+        UUID productId = UUID.randomUUID();
+
+        UpdateHubInventoryResponse response =
+                UpdateHubInventoryResponse.builder()
+                        .id(inventoryId)
+                        .hubId(hubId)
+                        .productId(productId)
+                        .quantity(10)
+                        .safetyStock(20)
+                        .build();
+
+        given(updateHubInventoryUseCase.update(
+                any(UpdateHubInventoryCommand.class)
+        )).willReturn(response);
+
+        // when & then
+        mockMvc.perform(
+                        patch("/api/v1/hub-inventories/{inventoryId}", inventoryId)
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content("""
+                                    {
+                                      "quantity": 10
+                                    }
+                                    """)
+                )
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.id")
+                        .value(inventoryId.toString()))
+                .andExpect(jsonPath("$.data.hubId")
+                        .value(hubId.toString()))
+                .andExpect(jsonPath("$.data.productId")
+                        .value(productId.toString()))
+                .andExpect(jsonPath("$.data.quantity")
+                        .value(10))
+                .andExpect(jsonPath("$.data.safetyStock")
+                        .value(20));
+
+        verify(updateHubInventoryUseCase)
+                .update(any(UpdateHubInventoryCommand.class));
+    }
+
+    @Test
+    @DisplayName("허브 재고 수량이 음수이면 INVALID_REQUEST를 반환한다")
+    void updateHubInventory_fail_negativeQuantity() throws Exception {
+        UUID inventoryId = UUID.randomUUID();
+
+        mockMvc.perform(
+                        patch("/api/v1/hub-inventories/{inventoryId}", inventoryId)
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content("""
+                                    {
+                                      "quantity": -1
+                                    }
+                                    """)
+                )
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.errorCode")
+                        .value(ErrorResponseCode.INVALID_REQUEST.getErrorCode()))
+                .andExpect(jsonPath("$.message")
+                        .value(ErrorResponseCode.INVALID_REQUEST.getMessage()));
+
+        verifyNoInteractions(updateHubInventoryUseCase);
     }
 }
