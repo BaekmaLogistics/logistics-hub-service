@@ -20,6 +20,9 @@ public class UpdateHubInventoryService implements UpdateHubInventoryUseCase {
     @Override
     @Transactional
     public UpdateHubInventoryResponse update(UpdateHubInventoryCommand command){
+        if(command == null || command.getId() == null || command.getQuantity() == null){
+            throw new ApiException(ErrorResponseCode.INVALID_REQUEST);
+        }
         HubInventory inventory = hubInventoryRepository.findById(command.getId())
                 .orElseThrow(() -> new ApiException(
                         ErrorResponseCode.HUB_INVENTORY_NOT_FOUND
