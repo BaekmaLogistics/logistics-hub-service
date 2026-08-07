@@ -3,8 +3,10 @@ package com.sparta.logistics.application.command.service;
 import com.sparta.logistics.application.command.dto.hub.DeleteHubCommand;
 import com.sparta.logistics.application.command.dto.hub.UpdateHubCommand;
 import com.sparta.logistics.application.command.dto.hub.UpdateHubResponse;
+import com.sparta.logistics.application.command.usecase.DeleteHubRoutesUseCase;
 import com.sparta.logistics.application.common.dto.Coordinate;
 import com.sparta.logistics.application.common.service.GeocodingService;
+import com.sparta.logistics.application.event.HubRouteChangedEvent;
 import com.sparta.logistics.common.code.ErrorResponseCode;
 import com.sparta.logistics.common.exception.ApiException;
 import com.sparta.logistics.domain.entity.Hub;
@@ -16,6 +18,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.test.util.ReflectionTestUtils;
 
 import java.time.Instant;
@@ -37,11 +40,17 @@ class DeleteHubServiceTest {
     @Mock
     private HubRepository hubRepository;
 
+    @Mock
+    private DeleteHubRoutesUseCase deleteHubRoutesUseCase;
+
+    @Mock
+    private ApplicationEventPublisher eventPublisher;
+
     @InjectMocks
     private DeleteHubService deleteHubService;
 
     @Test
-    @DisplayName("허브 삭제 성공")
+    @DisplayName("허브 삭제 시 연결된 활성 경로를 삭제하고 그래프 변경 이벤트를 발행한다")
     void deleteHub_success() {
         UUID hubId = UUID.randomUUID();
         UUID deletedBy = UUID.randomUUID();
@@ -65,6 +74,12 @@ class DeleteHubServiceTest {
         deleteHubService.deleteHub(command);
 
         assertThat(hub.isDeleted()).isTrue();
+
+        verify(deleteHubRoutesUseCase)
+                .deleteRoutesByHub(hub, deletedBy);
+
+        verify(eventPublisher)
+                .publishEvent(any(HubRouteChangedEvent.class));
     }
 
     @Test
@@ -81,6 +96,9 @@ class DeleteHubServiceTest {
         assertThatThrownBy(() -> deleteHubService.deleteHub(command))
                 .isInstanceOf(ApiException.class)
                 .hasMessage(ErrorResponseCode.HUB_NOT_FOUND.getMessage());
+
+        verifyNoInteractions(deleteHubRoutesUseCase);
+        verifyNoInteractions(eventPublisher);
     }
 
     @Test
@@ -112,5 +130,8 @@ class DeleteHubServiceTest {
         assertThatThrownBy(() -> deleteHubService.deleteHub(command))
                 .isInstanceOf(ApiException.class)
                 .hasMessage(ErrorResponseCode.HUB_ALREADY_DELETED.getMessage());
+
+        verifyNoInteractions(deleteHubRoutesUseCase);
+        verifyNoInteractions(eventPublisher);
     }
 }

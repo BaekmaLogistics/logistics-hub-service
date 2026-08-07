@@ -32,7 +32,7 @@ public class CreateHubRouteService implements CreateHubRouteUseCase {
 
     private void validate(Hub fromHub, Hub toHub) {
 
-        if (hubRouteRepository.existsByFromHubAndToHub(fromHub, toHub)) {
+        if (hubRouteRepository.existsByFromHubAndToHubAndDeletedAtIsNull(fromHub, toHub)) {
             throw new ApiException(ErrorResponseCode.HUB_ROUTE_ALREADY_EXISTS);
         }
     }

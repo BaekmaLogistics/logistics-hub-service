@@ -2,7 +2,10 @@ package com.sparta.logistics.presentation.command.controller;
 
 import com.sparta.logistics.application.command.dto.hubroute.CreateHubRouteCommand;
 import com.sparta.logistics.application.command.dto.hubroute.CreateHubRouteResponse;
+import com.sparta.logistics.application.command.dto.hubroute.UpdateHubRouteCommand;
+import com.sparta.logistics.application.command.dto.hubroute.UpdateHubRouteResponse;
 import com.sparta.logistics.application.command.usecase.CreateHubRouteUseCase;
+import com.sparta.logistics.application.command.usecase.UpdateHubRouteUseCase;
 import com.sparta.logistics.presentation.command.request.CreateHubRouteRequest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Tag;
@@ -19,7 +22,9 @@ import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.when;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -40,6 +45,9 @@ class HubRouteCommandControllerTest {
 
     @MockitoBean
     private CreateHubRouteUseCase createHubRouteUseCase;
+
+    @MockitoBean
+    private UpdateHubRouteUseCase updateHubRouteUseCase;
 
     @Test
     @DisplayName("허브 연결 생성")
@@ -77,6 +85,47 @@ class HubRouteCommandControllerTest {
                 .andExpect(jsonPath("$.data.duration").value(42));
 
         verify(createHubRouteUseCase).create(any(CreateHubRouteCommand.class));
+    }
+
+    @Test
+    @DisplayName("허브 경로 수정 성공")
+    void updateHubRoute_success() throws Exception {
+        // given
+        UUID hubRouteId = UUID.randomUUID();
+        UUID fromHubId = UUID.randomUUID();
+        UUID toHubId = UUID.randomUUID();
+
+        UpdateHubRouteResponse response = UpdateHubRouteResponse.builder()
+                .id(hubRouteId)
+                .fromHubId(fromHubId)
+                .toHubId(toHubId)
+                .distance(250.0)
+                .duration(180)
+                .build();
+
+        given(updateHubRouteUseCase.updateHubRoute(any(UpdateHubRouteCommand.class)))
+                .willReturn(response);
+
+        // when & then
+        mockMvc.perform(
+                        patch("/api/v1/hub-routes/{hubRouteId}", hubRouteId)
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content("""
+                                    {
+                                      "fromHubId": "%s",
+                                      "toHubId": "%s"
+                                    }
+                                    """.formatted(fromHubId, toHubId))
+                )
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.id").value(hubRouteId.toString()))
+                .andExpect(jsonPath("$.data.fromHubId").value(fromHubId.toString()))
+                .andExpect(jsonPath("$.data.toHubId").value(toHubId.toString()))
+                .andExpect(jsonPath("$.data.distance").value(250.0))
+                .andExpect(jsonPath("$.data.duration").value(180));
+
+        verify(updateHubRouteUseCase)
+                .updateHubRoute(any(UpdateHubRouteCommand.class));
     }
 
 }

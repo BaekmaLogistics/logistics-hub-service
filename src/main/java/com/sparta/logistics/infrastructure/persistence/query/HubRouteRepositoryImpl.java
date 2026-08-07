@@ -7,6 +7,7 @@ import com.querydsl.jpa.impl.JPAQueryFactory;
 import com.sparta.logistics.application.query.dto.HubRouteSearchCondition;
 import com.sparta.logistics.common.code.ErrorResponseCode;
 import com.sparta.logistics.common.exception.ApiException;
+import com.sparta.logistics.domain.entity.Hub;
 import com.sparta.logistics.domain.entity.HubRoute;
 import com.sparta.logistics.domain.entity.QHub;
 import com.sparta.logistics.domain.entity.QHubRoute;
@@ -121,5 +122,17 @@ public class HubRouteRepositoryImpl implements HubRouteRepositoryCustom {
                 countQuery::fetchOne
         );
 
+    }
+
+    @Override
+    public List<HubRoute> findAllActiveRoutesByHub(Hub hub){
+        return queryFactory
+                .selectFrom(hubRoute)
+                .where(
+                        hubRoute.deletedAt.isNull(),
+                        hubRoute.fromHub.eq(hub)
+                                .or(hubRoute.toHub.eq(hub))
+                )
+                .fetch();
     }
 }

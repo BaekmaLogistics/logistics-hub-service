@@ -40,7 +40,7 @@ public class HubRouteInitializer implements ApplicationRunner {
 
     private void createRoute(Hub fromHub, Hub toHub){
 
-        if(hubRouteRepository.existsByFromHubAndToHub(
+        if(hubRouteRepository.existsByFromHubAndToHubAndDeletedAtIsNull(
                 fromHub,
                 toHub
         )){
