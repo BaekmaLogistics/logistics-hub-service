@@ -22,6 +22,7 @@ import org.springframework.util.StringUtils;
 
 import java.util.List;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 @Repository
 @RequiredArgsConstructor
@@ -34,31 +35,39 @@ public class HubRouteRepositoryImpl implements HubRouteRepositoryCustom {
     private final QHub fromHub = new QHub("fromHub");
     private final QHub toHub = new QHub("toHub");
 
-    private OrderSpecifier<?> getOrderSpecifier(Pageable pageable) {
+    private OrderSpecifier<?>[] getOrderSpecifier(Pageable pageable) {
 
-        Sort.Order order = pageable.getSort().stream()
-                .findFirst()
-                .orElse(Sort.Order.desc("createdAt"));
+        Sort sort = pageable.getSort().isSorted()
+                ? pageable.getSort()
+                : Sort.by(Sort.Order.desc("createdAt"));
 
-        boolean asc = order.isAscending();
+        List<OrderSpecifier<?>> orderSpecifiers = sort.stream()
+                .map(order -> {
+                    boolean asc = order.isAscending();
 
-        return switch (order.getProperty()) {
+                    return switch (order.getProperty()) {
 
-            case "createdAt" ->
-                    asc ? hubRoute.createdAt.asc()
-                            : hubRoute.createdAt.desc();
+                        case "createdAt" ->
+                                asc ? hubRoute.createdAt.asc()
+                                        : hubRoute.createdAt.desc();
 
-            case "distance" ->
-                    asc ? hubRoute.distance.asc()
-                            : hubRoute.distance.desc();
+                        case "distance" ->
+                                asc ? hubRoute.distance.asc()
+                                        : hubRoute.distance.desc();
 
-            case "duration" ->
-                    asc ? hubRoute.duration.asc()
-                            : hubRoute.duration.desc();
+                        case "duration" ->
+                                asc ? hubRoute.duration.asc()
+                                        : hubRoute.duration.desc();
 
-            default ->
-                    throw new ApiException(ErrorResponseCode.INVALID_SORT_PROPERTY);
-        };
+                        default ->
+                                throw new ApiException(ErrorResponseCode.INVALID_SORT_PROPERTY);
+                    };
+                })
+                .collect(Collectors.toList());
+
+        orderSpecifiers.add(hubRoute.id.asc());
+
+        return orderSpecifiers.toArray(OrderSpecifier<?>[]::new);
     }
 
     private BooleanExpression notDeleted() {

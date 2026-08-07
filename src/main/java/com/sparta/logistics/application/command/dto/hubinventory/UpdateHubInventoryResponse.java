@@ -19,7 +19,7 @@ public class UpdateHubInventoryResponse {
     public static UpdateHubInventoryResponse from(HubInventory inventory) {
         return UpdateHubInventoryResponse.builder()
                 .id(inventory.getId())
-                .hubId(inventory.getHubId())
+                .hubId(inventory.getHub().getId())
                 .productId(inventory.getProductId())
                 .quantity(inventory.getQuantity())
                 .safetyStock(inventory.getSafetyStock())

@@ -63,8 +63,8 @@ class CreateHubInventoryServiceTest {
                 .willReturn(Optional.of(hub));
 
         given(hubInventoryRepository
-                .existsByHubIdAndProductIdAndDeletedAtIsNull(
-                        hubId,
+                .existsByHubAndProductIdAndDeletedAtIsNull(
+                        hub,
                         productId
                 ))
                 .willReturn(false);
@@ -164,8 +164,8 @@ class CreateHubInventoryServiceTest {
                 .willReturn(Optional.of(hub));
 
         given(hubInventoryRepository
-                .existsByHubIdAndProductIdAndDeletedAtIsNull(
-                        hubId,
+                .existsByHubAndProductIdAndDeletedAtIsNull(
+                        hub,
                         productId
                 ))
                 .willReturn(true);
@@ -206,8 +206,8 @@ class CreateHubInventoryServiceTest {
                 .willReturn(Optional.of(hub));
 
         given(hubInventoryRepository
-                .existsByHubIdAndProductIdAndDeletedAtIsNull(
-                        hubId,
+                .existsByHubAndProductIdAndDeletedAtIsNull(
+                        hub,
                         productId
                 ))
                 .willReturn(false);

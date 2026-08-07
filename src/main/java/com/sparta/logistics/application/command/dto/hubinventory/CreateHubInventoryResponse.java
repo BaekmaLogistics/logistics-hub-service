@@ -19,7 +19,7 @@ public class CreateHubInventoryResponse {
     public static CreateHubInventoryResponse from(HubInventory inventory) {
         return CreateHubInventoryResponse.builder()
                 .id(inventory.getId())
-                .hubId(inventory.getHubId())
+                .hubId(inventory.getHub().getId())
                 .productId(inventory.getProductId())
                 .quantity(inventory.getQuantity())
                 .safetyStock(inventory.getSafetyStock())
