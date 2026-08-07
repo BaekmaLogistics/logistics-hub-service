@@ -1,8 +1,10 @@
 package com.sparta.logistics.presentation.command.controller;
 
 import com.sparta.logistics.application.command.dto.hubroute.CreateHubRouteResponse;
+import com.sparta.logistics.application.command.dto.hubroute.DeleteHubRouteCommand;
 import com.sparta.logistics.application.command.dto.hubroute.UpdateHubRouteResponse;
 import com.sparta.logistics.application.command.usecase.CreateHubRouteUseCase;
+import com.sparta.logistics.application.command.usecase.DeleteHubRouteUseCase;
 import com.sparta.logistics.application.command.usecase.UpdateHubRouteUseCase;
 import com.sparta.logistics.common.code.GeneralResponseCode;
 import com.sparta.logistics.presentation.command.request.CreateHubRouteRequest;
@@ -22,6 +24,7 @@ public class HubRouteCommandController {
 
     private final CreateHubRouteUseCase createHubRouteUseCase;
     private final UpdateHubRouteUseCase updateHubRouteUseCase;
+    private final DeleteHubRouteUseCase deleteHubRouteUseCase;
 
     @PostMapping
     public ResponseEntity<GeneralResponse<CreateHubRouteResponse>> createHubRoute(
@@ -46,6 +49,25 @@ public class HubRouteCommandController {
         return GeneralResponse.toResponseEntity(
                 GeneralResponseCode.OK,
                 response
+        );
+    }
+
+    @DeleteMapping("/{hubRouteId}")
+    public ResponseEntity<GeneralResponse<Void>> deleteHubRoute(
+            @PathVariable UUID hubRouteId
+    ) {
+        UUID deletedBy = UUID.randomUUID(); //TODO: 인증 principal 적용
+
+        DeleteHubRouteCommand command = DeleteHubRouteCommand.builder()
+                .id(hubRouteId)
+                .deletedBy(deletedBy)
+                .build();
+
+        deleteHubRouteUseCase.deleteHubRoute(command);
+
+        return GeneralResponse.toResponseEntity(
+                GeneralResponseCode.OK,
+                null
         );
     }
 }
