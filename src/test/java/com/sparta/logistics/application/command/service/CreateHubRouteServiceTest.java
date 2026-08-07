@@ -85,7 +85,7 @@ class CreateHubRouteServiceTest {
         when(hubRepository.findById(toHubId))
                 .thenReturn(Optional.of(toHub));
 
-        when(hubRouteRepository.existsByFromHubAndToHub(fromHub, toHub))
+        when(hubRouteRepository.existsByFromHubAndToHubAndDeletedAtIsNull(fromHub, toHub))
                 .thenReturn(false);
 
         when(directionService.getRoute(fromHub, toHub))
@@ -248,7 +248,7 @@ class CreateHubRouteServiceTest {
         when(hubRepository.findById(toHubId))
                 .thenReturn(Optional.of(toHub));
 
-        when(hubRouteRepository.existsByFromHubAndToHub(fromHub, toHub))
+        when(hubRouteRepository.existsByFromHubAndToHubAndDeletedAtIsNull(fromHub, toHub))
                 .thenReturn(true);
 
         ApiException exception = assertThrows(
@@ -259,7 +259,7 @@ class CreateHubRouteServiceTest {
         assertThat(exception.getResponseCode())
                 .isEqualTo(ErrorResponseCode.HUB_ROUTE_ALREADY_EXISTS);
 
-        verify(hubRouteRepository).existsByFromHubAndToHub(fromHub, toHub);
+        verify(hubRouteRepository).existsByFromHubAndToHubAndDeletedAtIsNull(fromHub, toHub);
         verify(directionService, never()).getRoute(any(), any());
         verify(hubRouteRepository, never()).save(any());
     }

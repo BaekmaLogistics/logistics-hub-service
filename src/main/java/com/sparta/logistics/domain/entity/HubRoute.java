@@ -12,10 +12,11 @@ import java.util.UUID;
 @Entity
 @Getter
 @Table(
-        name = "p_hub_routes",
-        uniqueConstraints = {
-                @UniqueConstraint(columnNames = {"from_hub_id", "to_hub_id"})
-        }
+        name = "p_hub_routes"
+//        uniqueConstraints = {
+//                @UniqueConstraint(columnNames = {"from_hub_id", "to_hub_id"})
+//        }
+        //TODO:DB에서 Partial Unique Index으로 직접 해줘야함
 )
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class HubRoute extends BaseUpdatableEntity {
@@ -48,6 +49,22 @@ public class HubRoute extends BaseUpdatableEntity {
     }
 
     public void update(
+            Hub fromHub,
+            Hub toHub,
+            Double distance,
+            Integer duration
+    ) {
+        this.fromHub = fromHub;
+        this.toHub = toHub;
+        this.distance = distance;
+        this.duration = duration;
+    }
+
+    public boolean isDeleted(){
+        return getDeletedAt() != null;
+    }
+
+    public void updateRouteInfo(
             Double distance,
             Integer duration
     ) {

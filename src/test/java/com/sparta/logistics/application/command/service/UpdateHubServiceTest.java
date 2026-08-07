@@ -2,6 +2,7 @@ package com.sparta.logistics.application.command.service;
 
 import com.sparta.logistics.application.command.dto.hub.UpdateHubCommand;
 import com.sparta.logistics.application.command.dto.hub.UpdateHubResponse;
+import com.sparta.logistics.application.command.usecase.RefreshHubRouteUseCase;
 import com.sparta.logistics.application.common.dto.Coordinate;
 import com.sparta.logistics.application.common.service.GeocodingService;
 import com.sparta.logistics.common.code.ErrorResponseCode;
@@ -38,6 +39,9 @@ class UpdateHubServiceTest {
 
     @Mock
     private GeocodingService geocodingService;
+
+    @Mock
+    private RefreshHubRouteUseCase refreshHubRouteUseCase;
 
     @InjectMocks
     private UpdateHubService updateHubService;
@@ -83,6 +87,9 @@ class UpdateHubServiceTest {
 
         verify(geocodingService)
                 .getCoordinate(command.getAddress());
+
+        verify(refreshHubRouteUseCase)
+                .refreshRoutesByHub(hub);
     }
 
     @Test
@@ -169,6 +176,7 @@ class UpdateHubServiceTest {
         assertThat(response.getLongitude()).isEqualTo(127.1);
 
         verifyNoInteractions(geocodingService);
+        verifyNoInteractions(refreshHubRouteUseCase);
     }
 
     @Test
@@ -246,8 +254,9 @@ class UpdateHubServiceTest {
     }
 
     @Test
-    @DisplayName("요청 주소가 null이고 기존 주소가 존재하면 null 주소로 지오코딩이 호출된다")
-    void updateHub_addressNull_stillTriggersGeocodingWithNull() {
+    @DisplayName("요청 주소가 null이면 기존 주소와 좌표를 유지하고 경로를 재계산하지 않는다")
+    void updateHub_addressNull_keepsExistingAddress() {
+        // given
         UUID hubId = UUID.randomUUID();
         UUID managerId = UUID.randomUUID();
 
@@ -268,17 +277,18 @@ class UpdateHubServiceTest {
                 .address(null)
                 .build();
 
-        Coordinate coordinate = new Coordinate(0.0, 0.0);
+        // when
+        UpdateHubResponse response =
+                updateHubService.updateHub(command);
 
-        given(geocodingService.getCoordinate(null))
-                .willReturn(coordinate);
+        // then
+        assertThat(response.getAddress())
+                .isEqualTo("서울특별시 송파구");
+        assertThat(response.getLatitude()).isEqualTo(37.1);
+        assertThat(response.getLongitude()).isEqualTo(127.1);
 
-        UpdateHubResponse response = updateHubService.updateHub(command);
-
-        verify(geocodingService).getCoordinate(null);
-        assertThat(response.getAddress()).isNull();
-        assertThat(response.getLatitude()).isEqualTo(0.0);
-        assertThat(response.getLongitude()).isEqualTo(0.0);
+        verifyNoInteractions(geocodingService);
+        verifyNoInteractions(refreshHubRouteUseCase);
     }
 
 }

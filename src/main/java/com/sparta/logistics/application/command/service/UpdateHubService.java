@@ -2,6 +2,7 @@ package com.sparta.logistics.application.command.service;
 
 import com.sparta.logistics.application.command.dto.hub.UpdateHubCommand;
 import com.sparta.logistics.application.command.dto.hub.UpdateHubResponse;
+import com.sparta.logistics.application.command.usecase.RefreshHubRouteUseCase;
 import com.sparta.logistics.application.command.usecase.UpdateHubUseCase;
 import com.sparta.logistics.application.common.dto.Coordinate;
 import com.sparta.logistics.application.common.service.GeocodingService;
@@ -22,6 +23,7 @@ public class UpdateHubService implements UpdateHubUseCase {
 
     private final HubRepository hubRepository;
     private final GeocodingService geocodingService;
+    private final RefreshHubRouteUseCase refreshHubRouteUseCase;
 
     @Override
     @Transactional
@@ -46,7 +48,7 @@ public class UpdateHubService implements UpdateHubUseCase {
                     coordinate.longitude()
             );
 
-            //TODO: 허브 좌표 변경 시 허브와 연결된 루트의 거리, 시간 재계한 및 캐시 무효화
+            refreshHubRouteUseCase.refreshRoutesByHub(hub);
         }
 
         return UpdateHubResponse.from(hub);

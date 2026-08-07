@@ -1,12 +1,15 @@
 package com.sparta.logistics.application.command.service;
 
 import com.sparta.logistics.application.command.dto.hub.DeleteHubCommand;
+import com.sparta.logistics.application.command.usecase.DeleteHubRoutesUseCase;
 import com.sparta.logistics.application.command.usecase.DeleteHubUseCase;
+import com.sparta.logistics.application.event.HubRouteChangedEvent;
 import com.sparta.logistics.common.code.ErrorResponseCode;
 import com.sparta.logistics.common.exception.ApiException;
 import com.sparta.logistics.domain.entity.Hub;
 import com.sparta.logistics.domain.repository.HubRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -15,6 +18,8 @@ import org.springframework.transaction.annotation.Transactional;
 public class DeleteHubService implements DeleteHubUseCase {
 
     private final HubRepository hubRepository;
+    private final DeleteHubRoutesUseCase deleteHubRoutesUseCase;
+    private final ApplicationEventPublisher eventPublisher;
 
     @Override
     @Transactional
@@ -26,9 +31,15 @@ public class DeleteHubService implements DeleteHubUseCase {
             throw new ApiException(ErrorResponseCode.HUB_ALREADY_DELETED);
         }
 
-        // TODO: 허브 삭제 시 해당 허브와 연결된 HubRoute를 비활성화하고,
-//      // 트랜잭션 커밋 후 HubGraph reload 및 최단 경로 캐시 무효화
+        deleteHubRoutesUseCase.deleteRoutesByHub(
+                hub,
+                command.getDeletedBy()
+        );
 
         hub.softDelete(command.getDeletedBy());
+
+        eventPublisher.publishEvent(
+                new HubRouteChangedEvent()
+        );
     }
 }
