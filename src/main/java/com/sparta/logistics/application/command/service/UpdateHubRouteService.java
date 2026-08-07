@@ -44,6 +44,10 @@ public class UpdateHubRouteService implements UpdateHubRouteUseCase {
     public UpdateHubRouteResponse updateHubRoute(
             UpdateHubRouteCommand command
     ){
+
+        if(command.getFromHubId() == null && command.getToHubId() == null){
+            throw new ApiException(ErrorResponseCode.INVALID_HUB_ROUTE_UPDATE);
+        }
         //수정 대상 경로 조회
         HubRoute hubRoute = hubRouteRepository.findById(command.getId())
                 .orElseThrow(() ->

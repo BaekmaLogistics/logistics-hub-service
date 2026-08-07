@@ -26,7 +26,8 @@ public enum ErrorResponseCode implements ApiResponseCode {
     DIRECTION_API_ERROR(HttpStatus.BAD_GATEWAY, "HUB_0012", "경로 탐색 서비스 호출에 실패했습니다."),
     HUB_MANAGER_ALREADY_ASSIGNED(HttpStatus.BAD_REQUEST, "HUB_0013", "이미 해당 허브의 담당자로 배정된 관리자입니다."),
     INVALID_SORT_PROPERTY(HttpStatus.BAD_REQUEST, "HUB_0014", "지원하지 않는 정렬 기준입니다."),
-    HUB_ROUTE_ALREADY_DELETED(HttpStatus.BAD_REQUEST, "HUB_0015", "삭제된 허브 경로입니다.");
+    HUB_ROUTE_ALREADY_DELETED(HttpStatus.BAD_REQUEST, "HUB_0015", "삭제된 허브 경로입니다."),
+    INVALID_HUB_ROUTE_UPDATE(HttpStatus.BAD_REQUEST, "HUB_0016", "수정할 허브 경로 정보가 없습니다.");
 
     private final HttpStatus status;
     private final String errorCode;

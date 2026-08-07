@@ -6,6 +6,8 @@ import com.sparta.logistics.application.command.dto.hubroute.UpdateHubRouteComma
 import com.sparta.logistics.application.command.dto.hubroute.UpdateHubRouteResponse;
 import com.sparta.logistics.application.command.usecase.CreateHubRouteUseCase;
 import com.sparta.logistics.application.command.usecase.UpdateHubRouteUseCase;
+import com.sparta.logistics.common.code.ErrorResponseCode;
+import com.sparta.logistics.common.exception.ApiException;
 import com.sparta.logistics.presentation.command.request.CreateHubRouteRequest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Tag;
@@ -128,4 +130,27 @@ class HubRouteCommandControllerTest {
                 .updateHubRoute(any(UpdateHubRouteCommand.class));
     }
 
+    @Test
+    @DisplayName("허브 경로 수정 요청이 비어있으면 HUB_0016 에러를 반환한다")
+    void updateHubRoute_fail_emptyRequest() throws Exception {
+        UUID hubRouteId = UUID.randomUUID();
+
+        given(updateHubRouteUseCase.updateHubRoute(any(UpdateHubRouteCommand.class)))
+                .willThrow(
+                        new ApiException(
+                                ErrorResponseCode.INVALID_HUB_ROUTE_UPDATE
+                        )
+                );
+
+        mockMvc.perform(
+                        patch("/api/v1/hub-routes/{hubRouteId}", hubRouteId)
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content("{}")
+                )
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.errorCode").value("HUB_0016"));
+
+        verify(updateHubRouteUseCase)
+                .updateHubRoute(any(UpdateHubRouteCommand.class));
+    }
 }

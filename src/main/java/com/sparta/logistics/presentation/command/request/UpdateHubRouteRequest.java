@@ -1,6 +1,7 @@
 package com.sparta.logistics.presentation.command.request;
 
 import com.sparta.logistics.application.command.dto.hubroute.UpdateHubRouteCommand;
+import jakarta.validation.constraints.AssertTrue;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 

@@ -36,7 +36,7 @@ public class HubRouteCommandController {
     @PatchMapping("/{hubRouteId}")
     public ResponseEntity<GeneralResponse<UpdateHubRouteResponse>> updateHubRoute(
             @PathVariable UUID hubRouteId,
-            @RequestBody UpdateHubRouteRequest request
+            @Valid @RequestBody UpdateHubRouteRequest request
             ){
 
         UpdateHubRouteResponse response = updateHubRouteUseCase.updateHubRoute(

@@ -270,4 +270,29 @@ class UpdateHubRouteServiceTest {
         verifyNoInteractions(directionService);
         verifyNoInteractions(eventPublisher);
     }
+
+    @Test
+    @DisplayName("수정할 허브 ID가 모두 null이면 예외가 발생하고 외부 호출과 이벤트를 발생시키지 않는다")
+    void updateHubRoute_fail_emptyUpdate() {
+        // given
+        UpdateHubRouteCommand command = UpdateHubRouteCommand.builder()
+                .id(UUID.randomUUID())
+                .fromHubId(null)
+                .toHubId(null)
+                .build();
+
+        // when & then
+        assertThatThrownBy(() ->
+                updateHubRouteService.updateHubRoute(command)
+        )
+                .isInstanceOf(ApiException.class)
+                .hasMessage(
+                        ErrorResponseCode.INVALID_HUB_ROUTE_UPDATE.getMessage()
+                );
+
+        verifyNoInteractions(hubRouteRepository);
+        verifyNoInteractions(hubRepository);
+        verifyNoInteractions(directionService);
+        verifyNoInteractions(eventPublisher);
+    }
 }
