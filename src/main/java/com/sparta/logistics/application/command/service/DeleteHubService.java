@@ -26,6 +26,9 @@ public class DeleteHubService implements DeleteHubUseCase {
             throw new ApiException(ErrorResponseCode.HUB_ALREADY_DELETED);
         }
 
+        // TODO: 허브 삭제 시 해당 허브와 연결된 HubRoute를 비활성화하고,
+//      // 트랜잭션 커밋 후 HubGraph reload 및 최단 경로 캐시 무효화
+
         hub.softDelete(command.getDeletedBy());
     }
 }
