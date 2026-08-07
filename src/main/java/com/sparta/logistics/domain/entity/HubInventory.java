@@ -12,17 +12,20 @@ import lombok.AccessLevel;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import org.hibernate.annotations.Check;
 
 import java.util.UUID;
 
 @Entity
 @Getter
 @Table(
-        name = "p_hub_inventories",
-        uniqueConstraints = {
-                @UniqueConstraint(columnNames = {"hub_id", "product_id"})
-        }
+        name = "p_hub_inventories"
+//        uniqueConstraints = {
+//                @UniqueConstraint(columnNames = {"hub_id", "product_id"})
+//        }
+        //TODO:partial unique index
 )
+@Check(constraints = "quantity >= 0 AND safety_stock >= 0")
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class HubInventory extends BaseUpdatableEntity {
 
@@ -40,6 +43,8 @@ public class HubInventory extends BaseUpdatableEntity {
     @Column(name = "safety_stock", nullable = false)
     private Integer safetyStock;
 
+    private static final int DEFAULT_SAFETY_STOCK = 20;
+
     @Builder
     private HubInventory(
             UUID hubId,
@@ -47,10 +52,19 @@ public class HubInventory extends BaseUpdatableEntity {
             Integer quantity,
             Integer safetyStock
     ) {
+
+        if(quantity == null || quantity < 0){
+            throw new ApiException(ErrorResponseCode.INVALID_STOCK_QUANTITY);
+        }
+
+        if(safetyStock != null && safetyStock < 0){
+            throw new ApiException(ErrorResponseCode.INVALID_SAFETY_STOCK);
+        }
+
         this.hubId = hubId;
         this.productId = productId;
         this.quantity = quantity;
-        this.safetyStock = safetyStock;
+        this.safetyStock = safetyStock != null ? safetyStock : DEFAULT_SAFETY_STOCK;
     }
 
     public void increaseQuantity(int quantity) {
