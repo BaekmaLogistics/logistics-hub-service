@@ -34,7 +34,8 @@ public enum ErrorResponseCode implements ApiResponseCode {
     HUB_INVENTORY_NOT_FOUND(HttpStatus.NOT_FOUND, "HUB_INVENTORY_0005", "허브 재고를 찾을 수 없습니다."),
     HUB_INVENTORY_ALREADY_DELETED(HttpStatus.BAD_REQUEST, "HUB_INVENTORY_0006", "이미 삭제된 허브 재고입니다."),
     INVENTORY_LOCK_ACQUISITION_FAILED(HttpStatus.CONFLICT, "HUB_INVENTORY_0007","재고 처리 중입니다. 잠시 후 다시 시도해주세요."),
-    INVENTORY_IDEMPOTENCY_CONFLICT(HttpStatus.CONFLICT, "HUB_INVENTORY_0008", "동일한 재고 차감 요청에 다른 수량이 요청되었습니다.");
+    INVENTORY_IDEMPOTENCY_CONFLICT(HttpStatus.CONFLICT, "HUB_INVENTORY_0008", "동일한 재고 차감 요청에 다른 수량이 요청되었습니다."),
+    INVENTORY_OPERATION_NOT_FOUND(HttpStatus.NOT_FOUND, "HUB_INVENTORY_0009", "복구할 재고 차감 이력을 찾을 수 없습니다.");
 
     private final HttpStatus status;
     private final String errorCode;
