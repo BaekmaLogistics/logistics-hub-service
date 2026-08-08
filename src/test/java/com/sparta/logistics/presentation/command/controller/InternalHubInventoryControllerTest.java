@@ -1,6 +1,7 @@
 package com.sparta.logistics.presentation.command.controller;
 
 import com.sparta.logistics.application.command.usecase.DecreaseHubInventoryUseCase;
+import com.sparta.logistics.application.command.usecase.RestoreHubInventoryUseCase;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
@@ -32,6 +33,9 @@ class InternalHubInventoryControllerTest {
 
     @MockitoBean
     private DecreaseHubInventoryUseCase decreaseHubInventoryUseCase;
+
+    @MockitoBean
+    private RestoreHubInventoryUseCase restoreHubInventoryUseCase;
 
     @Test
     @DisplayName("재고 차감 요청에 성공한다.")
@@ -185,5 +189,108 @@ class InternalHubInventoryControllerTest {
                 .andExpect(status().isBadRequest());
 
         verifyNoInteractions(decreaseHubInventoryUseCase);
+    }
+
+    @Test
+    @DisplayName("재고 복구 요청에 성공한다.")
+    void restoreInventory_success() throws Exception {
+        // given
+        UUID orderId = UUID.randomUUID();
+        UUID hubId = UUID.randomUUID();
+        UUID productId = UUID.randomUUID();
+
+        String request = """
+            {
+                "orderId": "%s",
+                "hubId": "%s",
+                "productId": "%s"
+            }
+            """.formatted(orderId, hubId, productId);
+
+        // when & then
+        mockMvc.perform(
+                        patch("/internal/api/v1/hub-inventories/restore")
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content(request)
+                )
+                .andExpect(status().isOk());
+
+        verify(restoreHubInventoryUseCase)
+                .restore(orderId, hubId, productId);
+    }
+
+    @Test
+    @DisplayName("재고 복구 요청에 orderId가 없으면 400을 반환한다.")
+    void restoreInventory_missingOrderId() throws Exception {
+        // given
+        UUID hubId = UUID.randomUUID();
+        UUID productId = UUID.randomUUID();
+
+        String request = """
+            {
+                "hubId": "%s",
+                "productId": "%s"
+            }
+            """.formatted(hubId, productId);
+
+        // when & then
+        mockMvc.perform(
+                        patch("/internal/api/v1/hub-inventories/restore")
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content(request)
+                )
+                .andExpect(status().isBadRequest());
+
+        verifyNoInteractions(restoreHubInventoryUseCase);
+    }
+
+    @Test
+    @DisplayName("재고 복구 요청에 hubId가 없으면 400을 반환한다.")
+    void restoreInventory_missingHubId() throws Exception {
+        // given
+        UUID orderId = UUID.randomUUID();
+        UUID productId = UUID.randomUUID();
+
+        String request = """
+            {
+                "orderId": "%s",
+                "productId": "%s"
+            }
+            """.formatted(orderId, productId);
+
+        // when & then
+        mockMvc.perform(
+                        patch("/internal/api/v1/hub-inventories/restore")
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content(request)
+                )
+                .andExpect(status().isBadRequest());
+
+        verifyNoInteractions(restoreHubInventoryUseCase);
+    }
+
+    @Test
+    @DisplayName("재고 복구 요청에 productId가 없으면 400을 반환한다.")
+    void restoreInventory_missingProductId() throws Exception {
+        // given
+        UUID orderId = UUID.randomUUID();
+        UUID hubId = UUID.randomUUID();
+
+        String request = """
+            {
+                "orderId": "%s",
+                "hubId": "%s"
+            }
+            """.formatted(orderId, hubId);
+
+        // when & then
+        mockMvc.perform(
+                        patch("/internal/api/v1/hub-inventories/restore")
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content(request)
+                )
+                .andExpect(status().isBadRequest());
+
+        verifyNoInteractions(restoreHubInventoryUseCase);
     }
 }
