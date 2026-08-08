@@ -1,5 +1,6 @@
 package com.sparta.logistics.application.query.dto;
 
+import com.sparta.logistics.domain.model.PathSegment;
 import com.sparta.logistics.domain.model.ShortestPath;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -16,6 +17,8 @@ import java.util.UUID;
 public class ShortestPathResponse {
     private List<UUID> hubIds;
 
+    private List<PathSegment> segments;
+
     private double totalDistance;
 
     private int totalDuration;
@@ -23,6 +26,7 @@ public class ShortestPathResponse {
     public static ShortestPathResponse from(ShortestPath shortestPath){
         return new ShortestPathResponse(
                 shortestPath.path(),
+                shortestPath.segments(),
                 shortestPath.totalDistance(),
                 shortestPath.totalDuration()
         );

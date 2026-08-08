@@ -3,6 +3,7 @@ package com.sparta.logistics.domain.graph;
 
 import com.sparta.logistics.common.code.ErrorResponseCode;
 import com.sparta.logistics.common.exception.ApiException;
+import com.sparta.logistics.domain.model.PathSegment;
 import com.sparta.logistics.domain.model.ShortestPath;
 import org.springframework.stereotype.Component;
 
@@ -88,6 +89,10 @@ public class DijkstraPathFinder implements PathFinder {
             }
         }
 
+        if(distances.get(toHubId) == Double.MAX_VALUE){
+            throw new ApiException(ErrorResponseCode.PATH_NOT_FOUND);
+        }
+
         //경로 복원
         LinkedList<UUID> path = new LinkedList<>();
 
@@ -98,12 +103,35 @@ public class DijkstraPathFinder implements PathFinder {
             current = previous.get(current);
         }
 
-        if(distances.get(toHubId) == Double.MAX_VALUE){
-            throw new ApiException(ErrorResponseCode.PATH_NOT_FOUND);
+        List<PathSegment> segments = new ArrayList<>();
+
+        for(int i = 0; i< path.size()-1; i++){
+            UUID from = path.get(i);
+            UUID to = path.get(i+1);
+
+            HubNode fromNode = hubGraph.getNode(from);
+            HubNode toNode = hubGraph.getNode(to);
+
+            Edge edge = fromNode.getEdges().stream()
+                    .filter(e -> e.getToHubId().equals(to))
+                    .findFirst()
+                    .orElseThrow(() ->
+                            new ApiException(ErrorResponseCode.PATH_NOT_FOUND)
+                    );
+
+            segments.add(
+                    new PathSegment(
+                            from,
+                            to,
+                            edge.getDistance(),
+                            edge.getDuration()
+                    )
+            );
         }
 
         return new ShortestPath(
                 path,
+                segments,
                 distances.get(toHubId),
                 durations.get(toHubId)
         );

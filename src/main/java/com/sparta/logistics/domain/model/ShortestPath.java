@@ -6,6 +6,8 @@ import java.util.UUID;
 public record ShortestPath(
         List<UUID> path,
 
+        List<PathSegment> segments,
+
         double totalDistance,
 
         int totalDuration
