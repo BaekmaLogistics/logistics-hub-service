@@ -181,6 +181,15 @@ class HubRouteQueryControllerTest {
                 .andExpect(jsonPath("$.data.segments[0].duration")
                         .value(40))
 
+                .andExpect(jsonPath("$.data.segments[1].fromHubId")
+                        .value(middleHubId.toString()))
+                .andExpect(jsonPath("$.data.segments[1].toHubId")
+                        .value(toHubId.toString()))
+                .andExpect(jsonPath("$.data.segments[1].distance")
+                        .value(70.5))
+                .andExpect(jsonPath("$.data.segments[1].duration")
+                        .value(55))
+
                 .andExpect(jsonPath("$.data.totalDistance")
                         .value(120.5))
                 .andExpect(jsonPath("$.data.totalDuration")
