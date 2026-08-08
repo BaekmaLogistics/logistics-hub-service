@@ -15,6 +15,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.test.util.ReflectionTestUtils;
 
 import java.util.Optional;
 import java.util.UUID;
@@ -51,6 +52,8 @@ class CreateHubInventoryServiceTest {
                 .latitude(37.1)
                 .longitude(127.1)
                 .build();
+
+        ReflectionTestUtils.setField(hub, "id", hubId);
 
         CreateHubInventoryCommand command =
                 CreateHubInventoryCommand.builder()

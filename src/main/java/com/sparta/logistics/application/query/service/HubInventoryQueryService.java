@@ -11,6 +11,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.UUID;
 
@@ -21,6 +22,7 @@ public class HubInventoryQueryService implements HubInventoryQueryUseCase {
     private final HubInventoryRepository hubInventoryRepository;
 
     @Override
+    @Transactional(readOnly = true)
     public HubInventoryResponse getHubInventory(UUID inventoryId){
         HubInventory inventory = hubInventoryRepository.findById(inventoryId)
                 .orElseThrow(() -> new ApiException(ErrorResponseCode.HUB_INVENTORY_NOT_FOUND));
@@ -33,6 +35,7 @@ public class HubInventoryQueryService implements HubInventoryQueryUseCase {
     }
 
     @Override
+    @Transactional(readOnly = true)
     public Page<HubInventoryResponse> searchHubInventories(
             HubInventorySearchCondition condition,
             Pageable pageable

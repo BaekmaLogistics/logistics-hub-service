@@ -1,12 +1,10 @@
 package com.sparta.logistics.presentation.command.controller;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.sparta.logistics.application.command.dto.hubinventory.CreateHubInventoryCommand;
-import com.sparta.logistics.application.command.dto.hubinventory.CreateHubInventoryResponse;
-import com.sparta.logistics.application.command.dto.hubinventory.UpdateHubInventoryCommand;
-import com.sparta.logistics.application.command.dto.hubinventory.UpdateHubInventoryResponse;
+import com.sparta.logistics.application.command.dto.hubinventory.*;
 import com.sparta.logistics.application.command.usecase.CreateHubInventoryUseCase;
 import com.sparta.logistics.application.command.usecase.UpdateHubInventoryUseCase;
+import com.sparta.logistics.application.command.usecase.UpdateSafetyStockUseCase;
 import com.sparta.logistics.common.code.ErrorResponseCode;
 import com.sparta.logistics.presentation.command.request.CreateHubInventoryRequest;
 import com.sparta.logistics.presentation.common.exception.GlobalExceptionHandler;
@@ -51,6 +49,9 @@ class HubInventoryCommandControllerTest {
 
     @MockitoBean
     private UpdateHubInventoryUseCase updateHubInventoryUseCase;
+
+    @MockitoBean
+    private UpdateSafetyStockUseCase updateSafetyStockUseCase;
 
     @Test
     @DisplayName("허브 재고 등록 성공")
@@ -195,5 +196,45 @@ class HubInventoryCommandControllerTest {
                         .value(ErrorResponseCode.INVALID_REQUEST.getMessage()));
 
         verifyNoInteractions(updateHubInventoryUseCase);
+    }
+
+    @Test
+    @DisplayName("안전 재고 설정 성공")
+    void updateSafetyStock_success() throws Exception {
+        // given
+        UUID inventoryId = UUID.randomUUID();
+        UUID hubId = UUID.randomUUID();
+        UUID productId = UUID.randomUUID();
+
+        UpdateSafetyStockResponse response =
+                UpdateSafetyStockResponse.builder()
+                        .inventoryId(inventoryId)
+                        .safetyStock(25)
+                        .build();
+
+        given(updateSafetyStockUseCase.updateSafetyStock(
+                any(UpdateSafetyStockCommand.class)
+        )).willReturn(response);
+
+        // when & then
+        mockMvc.perform(
+                        patch(
+                                "/api/v1/hub-inventories/{inventoryId}/safety-stock",
+                                inventoryId
+                        )
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content("""
+                                    {
+                                      "safetyStock": 25
+                                    }
+                                    """)
+                )
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.inventoryId")
+                        .value(inventoryId.toString()))
+                .andExpect(jsonPath("$.data.safetyStock").value(25));
+
+        verify(updateSafetyStockUseCase)
+                .updateSafetyStock(any(UpdateSafetyStockCommand.class));
     }
 }
