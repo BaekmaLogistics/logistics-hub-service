@@ -12,6 +12,12 @@ import java.util.*;
 @Component
 public class DijkstraPathFinder implements PathFinder {
 
+    private record PreviousEdge(
+            UUID fromHubId,
+            Edge edge
+    ){
+    }
+
     @Override
     public ShortestPath findShortestPath(
             HubGraph hubGraph,
@@ -21,7 +27,7 @@ public class DijkstraPathFinder implements PathFinder {
         //자료 구조 생성
         Map<UUID, Double> distances = new HashMap<>();
         Map<UUID, Integer> durations = new HashMap<>();
-        Map<UUID, UUID> previous = new HashMap<>();
+        Map<UUID, PreviousEdge> previous = new HashMap<>();
         PriorityQueue<PathState> pq = new PriorityQueue<>();
 
         //초기화
@@ -76,7 +82,7 @@ public class DijkstraPathFinder implements PathFinder {
 
                     previous.put(
                             edge.getToHubId(),
-                            cur.hubId()
+                            new PreviousEdge(cur.hubId(), edge)
                     );
 
                     pq.offer(
@@ -95,38 +101,31 @@ public class DijkstraPathFinder implements PathFinder {
 
         //경로 복원
         LinkedList<UUID> path = new LinkedList<>();
+        LinkedList<PathSegment> segments = new LinkedList<>();
 
         UUID current = toHubId;
+        path.addFirst(current);
 
-        while(current != null){
-            path.addFirst(current);
-            current = previous.get(current);
-        }
+        while(!current.equals(fromHubId)){
+            PreviousEdge previousEdge = previous.get(current);
 
-        List<PathSegment> segments = new ArrayList<>();
+            if(previousEdge == null){
+                throw new ApiException(ErrorResponseCode.PATH_NOT_FOUND);
+            }
 
-        for(int i = 0; i< path.size()-1; i++){
-            UUID from = path.get(i);
-            UUID to = path.get(i+1);
+            Edge edge = previousEdge.edge();
 
-            HubNode fromNode = hubGraph.getNode(from);
-            HubNode toNode = hubGraph.getNode(to);
-
-            Edge edge = fromNode.getEdges().stream()
-                    .filter(e -> e.getToHubId().equals(to))
-                    .findFirst()
-                    .orElseThrow(() ->
-                            new ApiException(ErrorResponseCode.PATH_NOT_FOUND)
-                    );
-
-            segments.add(
+            segments.addFirst(
                     new PathSegment(
-                            from,
-                            to,
+                            previousEdge.fromHubId(),
+                            current,
                             edge.getDistance(),
                             edge.getDuration()
                     )
             );
+
+            current = previousEdge.fromHubId();
+            path.addFirst(current);
         }
 
         return new ShortestPath(
