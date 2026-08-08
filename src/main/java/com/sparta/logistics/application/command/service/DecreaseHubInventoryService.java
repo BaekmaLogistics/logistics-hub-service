@@ -26,9 +26,17 @@ public class DecreaseHubInventoryService{
         HubInventory inventory = hubInventoryRepository.findByHubIdAndProductIdAndDeletedAtIsNull(hubId, productId)
                 .orElseThrow(() -> new ApiException(ErrorResponseCode.HUB_INVENTORY_NOT_FOUND));
 
-        Optional<HubInventoryOperation> existingOperation = hubInventoryOperationRepository.findByOrderIdAndHubAndProductId(orderId, inventory.getHub(), productId);
+        Optional<HubInventoryOperation> existingOperation = hubInventoryOperationRepository.findByOrderIdAndHub_IdAndProductId(orderId, hubId, productId);
 
         if(existingOperation.isPresent()){
+            HubInventoryOperation existedOperation = existingOperation.get();
+
+            if (!existedOperation.getQuantity().equals(quantity)) {
+                throw new ApiException(
+                        ErrorResponseCode.INVENTORY_IDEMPOTENCY_CONFLICT
+                );
+            }
+
             return;
         }
 

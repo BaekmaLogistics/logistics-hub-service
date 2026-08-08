@@ -9,9 +9,9 @@ import java.util.UUID;
 
 public interface HubInventoryOperationRepository extends JpaRepository<HubInventoryOperation, UUID> {
 
-    Optional<HubInventoryOperation> findByOrderIdAndHubAndProductId(
+    Optional<HubInventoryOperation> findByOrderIdAndHub_IdAndProductId(
             UUID orderId,
-            Hub hub,
+            UUID hubId,
             UUID productId
     );
 

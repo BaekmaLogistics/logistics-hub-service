@@ -1,6 +1,7 @@
 package com.sparta.logistics.application.command.service;
 
 import com.sparta.logistics.application.command.usecase.DecreaseHubInventoryUseCase;
+import com.sparta.logistics.common.exception.ApiException;
 import com.sparta.logistics.domain.entity.Hub;
 import com.sparta.logistics.domain.entity.HubInventory;
 import com.sparta.logistics.domain.repository.HubInventoryRepository;
@@ -14,6 +15,7 @@ import org.springframework.boot.test.context.SpringBootTest;
 import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 @Tag("integration")
 @SpringBootTest
@@ -78,6 +80,57 @@ class DecreaseHubInventoryIdempotencyTest {
                         + result.getQuantity()
         );
 
+        assertEquals(90, result.getQuantity());
+    }
+
+    @Test
+    @DisplayName("동일한 멱등성 키로 다른 수량을 요청하면 충돌 예외가 발생한다.")
+    void decrease_sameIdempotencyKeyWithDifferentQuantity() {
+
+        // given
+        UUID hubId = UUID.fromString(
+                "330f5e07-1bb8-45f0-84f5-03db26562caa"
+        );
+
+        UUID orderId = UUID.randomUUID();
+        UUID productId = UUID.randomUUID();
+
+        Hub hub = hubRepository.findById(hubId)
+                .orElseThrow();
+
+        HubInventory inventory = HubInventory.builder()
+                .hub(hub)
+                .productId(productId)
+                .quantity(100)
+                .safetyStock(20)
+                .build();
+
+        hubInventoryRepository.saveAndFlush(inventory);
+
+        // 최초 요청
+        decreaseHubInventoryUseCase.decrease(
+                orderId,
+                hubId,
+                productId,
+                10
+        );
+
+        // when & then
+        assertThrows(
+                ApiException.class,
+                () -> decreaseHubInventoryUseCase.decrease(
+                        orderId,
+                        hubId,
+                        productId,
+                        20
+                )
+        );
+
+        HubInventory result =
+                hubInventoryRepository.findById(inventory.getId())
+                        .orElseThrow();
+
+        // 최초 요청의 10개만 차감되어야 함
         assertEquals(90, result.getQuantity());
     }
 }
