@@ -37,16 +37,18 @@ class InternalHubInventoryControllerTest {
     @DisplayName("재고 차감 요청에 성공한다.")
     void decreaseInventory_success() throws Exception {
         // given
+        UUID orderId = UUID.randomUUID();
         UUID hubId = UUID.randomUUID();
         UUID productId = UUID.randomUUID();
 
         String request = """
                 {
+                    "orderId": "%s",
                     "hubId": "%s",
                     "productId": "%s",
                     "quantity": 10
                 }
-                """.formatted(hubId, productId);
+                """.formatted(orderId, hubId, productId);
 
         // when & then
         mockMvc.perform(
@@ -57,7 +59,7 @@ class InternalHubInventoryControllerTest {
                 .andExpect(status().isOk());
 
         verify(decreaseHubInventoryUseCase)
-                .decrease(hubId, productId, 10);
+                .decrease(orderId, hubId, productId, 10);
     }
 
     @Test

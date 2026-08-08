@@ -131,7 +131,7 @@ class HubRouteCommandControllerTest {
     }
 
     @Test
-    @DisplayName("허브 경로 수정 요청이 비어있으면 HUB_0016 에러를 반환한다")
+    @DisplayName("허브 경로 수정 요청이 비어있으면 HUB_ROUTE_0006 에러를 반환한다")
     void updateHubRoute_fail_emptyRequest() throws Exception {
         UUID hubRouteId = UUID.randomUUID();
 
@@ -148,7 +148,7 @@ class HubRouteCommandControllerTest {
                                 .content("{}")
                 )
                 .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.errorCode").value("HUB_0016"));
+                .andExpect(jsonPath("$.errorCode").value("HUB_ROUTE_0006"));
 
         verify(updateHubRouteUseCase)
                 .updateHubRoute(any(UpdateHubRouteCommand.class));

@@ -4,11 +4,14 @@ import com.sparta.logistics.application.command.usecase.DecreaseHubInventoryUseC
 import com.sparta.logistics.common.code.ErrorResponseCode;
 import com.sparta.logistics.common.exception.ApiException;
 import com.sparta.logistics.domain.entity.HubInventory;
+import com.sparta.logistics.domain.entity.HubInventoryOperation;
+import com.sparta.logistics.domain.repository.HubInventoryOperationRepository;
 import com.sparta.logistics.domain.repository.HubInventoryRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.Optional;
 import java.util.UUID;
 
 @Service
@@ -16,12 +19,28 @@ import java.util.UUID;
 public class DecreaseHubInventoryService{
 
     private final HubInventoryRepository hubInventoryRepository;
+    private final HubInventoryOperationRepository hubInventoryOperationRepository;
 
     @Transactional
-    public void decrease(UUID hubId, UUID productId, int quantity){
+    public void decrease(UUID orderId, UUID hubId, UUID productId, int quantity){
         HubInventory inventory = hubInventoryRepository.findByHubIdAndProductIdAndDeletedAtIsNull(hubId, productId)
                 .orElseThrow(() -> new ApiException(ErrorResponseCode.HUB_INVENTORY_NOT_FOUND));
 
+        Optional<HubInventoryOperation> existingOperation = hubInventoryOperationRepository.findByOrderIdAndHubAndProductId(orderId, inventory.getHub(), productId);
+
+        if(existingOperation.isPresent()){
+            return;
+        }
+
         inventory.decreaseQuantity(quantity);
+
+        HubInventoryOperation operation = HubInventoryOperation.builder()
+                .orderId(orderId)
+                .hub(inventory.getHub())
+                .productId(productId)
+                .quantity(quantity)
+                .build();
+
+        hubInventoryOperationRepository.save(operation);
     }
 }

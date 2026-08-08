@@ -21,6 +21,7 @@ public class InternalHubInventoryController {
             @Valid @RequestBody DecreaseHubInventoryRequest request
             ){
         decreaseHubInventoryUseCase.decrease(
+                request.getOrderId(),
                 request.getHubId(),
                 request.getProductId(),
                 request.getQuantity()

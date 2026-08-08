@@ -63,6 +63,7 @@ class DecreaseHubInventoryConcurrencyTest {
         CountDownLatch doneLatch = new CountDownLatch(threadCount);
 
         for (int i = 0; i < threadCount; i++) {
+            UUID orderId = UUID.randomUUID();
             executorService.submit(() -> {
                 try {
                     readyLatch.countDown();
@@ -70,6 +71,7 @@ class DecreaseHubInventoryConcurrencyTest {
                     startLatch.await();
 
                     decreaseHubInventoryUseCase.decrease(
+                            orderId,
                             hubId,
                             productId,
                             1

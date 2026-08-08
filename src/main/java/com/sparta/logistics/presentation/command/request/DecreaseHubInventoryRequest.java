@@ -10,6 +10,9 @@ import java.util.UUID;
 public class DecreaseHubInventoryRequest {
 
     @NotNull
+    private UUID orderId;
+
+    @NotNull
     private UUID hubId;
 
     @NotNull

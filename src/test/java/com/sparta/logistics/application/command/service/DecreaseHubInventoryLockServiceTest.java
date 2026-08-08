@@ -15,6 +15,7 @@ import org.redisson.api.RedissonClient;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 
+import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.Mockito.*;
 
@@ -33,6 +34,7 @@ class DecreaseHubInventoryLockServiceTest {
 
     private DecreaseHubInventoryLockService lockService;
 
+    private UUID orderId;
     private UUID hubId;
     private UUID productId;
 
@@ -43,6 +45,7 @@ class DecreaseHubInventoryLockServiceTest {
                 decreaseHubInventoryService
         );
 
+        orderId = UUID.randomUUID();
         hubId = UUID.randomUUID();
         productId = UUID.randomUUID();
     }
@@ -65,6 +68,7 @@ class DecreaseHubInventoryLockServiceTest {
 
         // when
         lockService.decrease(
+                orderId,
                 hubId,
                 productId,
                 10
@@ -80,7 +84,7 @@ class DecreaseHubInventoryLockServiceTest {
                 .tryLock(3L, TimeUnit.SECONDS);
 
         inOrder.verify(decreaseHubInventoryService)
-                .decrease(hubId, productId, 10);
+                .decrease(orderId, hubId, productId, 10);
 
         inOrder.verify(lock)
                 .isHeldByCurrentThread();
@@ -107,6 +111,7 @@ class DecreaseHubInventoryLockServiceTest {
         assertThrows(
                 ApiException.class,
                 () -> lockService.decrease(
+                        orderId,
                         hubId,
                         productId,
                         10
@@ -137,6 +142,7 @@ class DecreaseHubInventoryLockServiceTest {
             assertThrows(
                     ApiException.class,
                     () -> lockService.decrease(
+                            orderId,
                             hubId,
                             productId,
                             10
@@ -173,17 +179,56 @@ class DecreaseHubInventoryLockServiceTest {
 
         doThrow(new RuntimeException("재고 차감 실패"))
                 .when(decreaseHubInventoryService)
-                .decrease(hubId, productId, 10);
+                .decrease(orderId,hubId, productId, 10);
 
         // when & then
         assertThrows(
                 RuntimeException.class,
                 () -> lockService.decrease(
+                        orderId,
                         hubId,
                         productId,
                         10
                 )
         );
+
+        verify(lock).unlock();
+    }
+
+    @Test
+    @DisplayName("재고 차감 커밋 후 락 해제에 실패해도 차감 요청은 실패로 처리하지 않는다.")
+    void decrease_unlockFailsAfterSuccess()
+            throws InterruptedException {
+
+        // given
+        String lockKey =
+                "lock:hub-inventory:" + hubId + ":" + productId;
+
+        when(redissonClient.getLock(lockKey))
+                .thenReturn(lock);
+
+        when(lock.tryLock(3L, TimeUnit.SECONDS))
+                .thenReturn(true);
+
+        when(lock.isHeldByCurrentThread())
+                .thenReturn(true);
+
+        doThrow(new RuntimeException("Redis connection failed"))
+                .when(lock)
+                .unlock();
+
+        // when & then
+        assertDoesNotThrow(
+                () -> lockService.decrease(
+                        orderId,
+                        hubId,
+                        productId,
+                        10
+                )
+        );
+
+        verify(decreaseHubInventoryService)
+                .decrease(orderId, hubId, productId, 10);
 
         verify(lock).unlock();
     }
