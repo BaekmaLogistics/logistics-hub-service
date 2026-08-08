@@ -5,6 +5,7 @@ import com.sparta.logistics.application.port.ShortestPathCache;
 import com.sparta.logistics.application.query.dto.ShortestPathResponse;
 import com.sparta.logistics.domain.graph.HubGraph;
 import com.sparta.logistics.domain.graph.PathFinder;
+import com.sparta.logistics.domain.model.PathSegment;
 import com.sparta.logistics.domain.model.ShortestPath;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -45,8 +46,16 @@ class FindShortestPathServiceTest {
         fromHubId = UUID.randomUUID();
         toHubId = UUID.randomUUID();
 
+        PathSegment segment = new PathSegment(
+                fromHubId,
+                toHubId,
+                100.0,
+                60
+        );
+
         shortestPath = new ShortestPath(
                 List.of(fromHubId, toHubId),
+                List.of(segment),
                 100.0,
                 60
         );
@@ -69,6 +78,7 @@ class FindShortestPathServiceTest {
 
         // then
         assertEquals(shortestPath.path(), response.getHubIds());
+        assertEquals(shortestPath.segments(), response.getSegments());
         assertEquals(shortestPath.totalDistance(), response.getTotalDistance());
         assertEquals(shortestPath.totalDuration(), response.getTotalDuration());
 
@@ -110,6 +120,7 @@ class FindShortestPathServiceTest {
 
         // then
         assertEquals(shortestPath.path(), response.getHubIds());
+        assertEquals(shortestPath.segments(), response.getSegments());
         assertEquals(shortestPath.totalDistance(), response.getTotalDistance());
         assertEquals(shortestPath.totalDuration(), response.getTotalDuration());
 

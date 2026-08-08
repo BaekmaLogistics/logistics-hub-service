@@ -6,6 +6,7 @@ import com.sparta.logistics.application.query.usecase.FindShortestPathUseCase;
 import com.sparta.logistics.application.query.usecase.HubRouteQueryUseCase;
 import com.sparta.logistics.domain.entity.Hub;
 import com.sparta.logistics.domain.entity.HubRoute;
+import com.sparta.logistics.domain.model.PathSegment;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
@@ -132,9 +133,24 @@ class HubRouteQueryControllerTest {
         UUID middleHubId = UUID.randomUUID();
         UUID toHubId = UUID.randomUUID();
 
+        PathSegment firstSegment = new PathSegment(
+                fromHubId,
+                middleHubId,
+                50.0,
+                40
+        );
+
+        PathSegment secondSegment = new PathSegment(
+                middleHubId,
+                toHubId,
+                70.5,
+                55
+        );
+
         ShortestPathResponse response =
                 new ShortestPathResponse(
                         List.of(fromHubId, middleHubId, toHubId),
+                        List.of(firstSegment, secondSegment),
                         120.5,
                         95
                 );
@@ -155,6 +171,16 @@ class HubRouteQueryControllerTest {
                         .value(middleHubId.toString()))
                 .andExpect(jsonPath("$.data.hubIds[2]")
                         .value(toHubId.toString()))
+
+                .andExpect(jsonPath("$.data.segments[0].fromHubId")
+                        .value(fromHubId.toString()))
+                .andExpect(jsonPath("$.data.segments[0].toHubId")
+                        .value(middleHubId.toString()))
+                .andExpect(jsonPath("$.data.segments[0].distance")
+                        .value(50.0))
+                .andExpect(jsonPath("$.data.segments[0].duration")
+                        .value(40))
+
                 .andExpect(jsonPath("$.data.totalDistance")
                         .value(120.5))
                 .andExpect(jsonPath("$.data.totalDuration")
