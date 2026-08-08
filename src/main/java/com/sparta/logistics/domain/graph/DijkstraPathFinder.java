@@ -3,6 +3,7 @@ package com.sparta.logistics.domain.graph;
 
 import com.sparta.logistics.common.code.ErrorResponseCode;
 import com.sparta.logistics.common.exception.ApiException;
+import com.sparta.logistics.domain.model.PathSegment;
 import com.sparta.logistics.domain.model.ShortestPath;
 import org.springframework.stereotype.Component;
 
@@ -10,6 +11,12 @@ import java.util.*;
 
 @Component
 public class DijkstraPathFinder implements PathFinder {
+
+    private record PreviousEdge(
+            UUID fromHubId,
+            Edge edge
+    ){
+    }
 
     @Override
     public ShortestPath findShortestPath(
@@ -20,7 +27,7 @@ public class DijkstraPathFinder implements PathFinder {
         //자료 구조 생성
         Map<UUID, Double> distances = new HashMap<>();
         Map<UUID, Integer> durations = new HashMap<>();
-        Map<UUID, UUID> previous = new HashMap<>();
+        Map<UUID, PreviousEdge> previous = new HashMap<>();
         PriorityQueue<PathState> pq = new PriorityQueue<>();
 
         //초기화
@@ -75,7 +82,7 @@ public class DijkstraPathFinder implements PathFinder {
 
                     previous.put(
                             edge.getToHubId(),
-                            cur.hubId()
+                            new PreviousEdge(cur.hubId(), edge)
                     );
 
                     pq.offer(
@@ -88,22 +95,42 @@ public class DijkstraPathFinder implements PathFinder {
             }
         }
 
-        //경로 복원
-        LinkedList<UUID> path = new LinkedList<>();
-
-        UUID current = toHubId;
-
-        while(current != null){
-            path.addFirst(current);
-            current = previous.get(current);
-        }
-
         if(distances.get(toHubId) == Double.MAX_VALUE){
             throw new ApiException(ErrorResponseCode.PATH_NOT_FOUND);
         }
 
+        //경로 복원
+        LinkedList<UUID> path = new LinkedList<>();
+        LinkedList<PathSegment> segments = new LinkedList<>();
+
+        UUID current = toHubId;
+        path.addFirst(current);
+
+        while(!current.equals(fromHubId)){
+            PreviousEdge previousEdge = previous.get(current);
+
+            if(previousEdge == null){
+                throw new ApiException(ErrorResponseCode.PATH_NOT_FOUND);
+            }
+
+            Edge edge = previousEdge.edge();
+
+            segments.addFirst(
+                    new PathSegment(
+                            previousEdge.fromHubId(),
+                            current,
+                            edge.getDistance(),
+                            edge.getDuration()
+                    )
+            );
+
+            current = previousEdge.fromHubId();
+            path.addFirst(current);
+        }
+
         return new ShortestPath(
                 path,
+                segments,
                 distances.get(toHubId),
                 durations.get(toHubId)
         );

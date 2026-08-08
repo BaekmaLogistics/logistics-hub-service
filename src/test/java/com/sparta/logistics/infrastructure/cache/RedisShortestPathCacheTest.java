@@ -1,6 +1,7 @@
 package com.sparta.logistics.infrastructure.cache;
 
 import com.sparta.logistics.application.port.ShortestPathCache;
+import com.sparta.logistics.domain.model.PathSegment;
 import com.sparta.logistics.domain.model.ShortestPath;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Tag;
@@ -27,14 +28,30 @@ class RedisShortestPathCacheTest {
         UUID hubB = UUID.randomUUID();
         UUID hubC = UUID.randomUUID();
 
-        ShortestPath pathAB = new ShortestPath(
-                List.of(hubA, hubB),
+        PathSegment pathSegmentAB = new PathSegment(
+                hubA,
+                hubB,
                 100.0,
                 60
         );
 
+        ShortestPath pathAB = new ShortestPath(
+                List.of(hubA, hubB),
+                List.of(pathSegmentAB),
+                100.0,
+                60
+        );
+
+        PathSegment pathSegmentBC = new PathSegment(
+                hubB,
+                hubC,
+                150.0,
+                80
+        );
+
         ShortestPath pathBC = new ShortestPath(
                 List.of(hubB, hubC),
+                List.of(pathSegmentBC),
                 200.0,
                 120
         );
