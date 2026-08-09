@@ -2,6 +2,7 @@ package com.sparta.logistics.application.command.service;
 
 import com.sparta.logistics.application.command.dto.hubinventory.UpdateHubInventoryCommand;
 import com.sparta.logistics.application.command.dto.hubinventory.UpdateHubInventoryResponse;
+import com.sparta.logistics.application.event.InventoryLowEvent;
 import com.sparta.logistics.common.code.ErrorResponseCode;
 import com.sparta.logistics.common.exception.ApiException;
 import com.sparta.logistics.domain.entity.Hub;
@@ -11,9 +12,12 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.context.ApplicationEventPublisher;
+import org.springframework.test.util.ReflectionTestUtils;
 
 import java.time.Instant;
 import java.util.Optional;
@@ -22,9 +26,8 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.BDDMockito.given;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.verifyNoInteractions;
-import org.springframework.test.util.ReflectionTestUtils;
 
 @Tag("unit")
 @ExtendWith(MockitoExtension.class)
@@ -33,11 +36,14 @@ class UpdateHubInventoryServiceTest {
     @Mock
     private HubInventoryRepository hubInventoryRepository;
 
+    @Mock
+    private ApplicationEventPublisher eventPublisher;
+
     @InjectMocks
     private UpdateHubInventoryService updateHubInventoryService;
 
     @Test
-    @DisplayName("허브 재고 수량 수정 성공")
+    @DisplayName("허브 재고 수량 수정으로 안전재고 이하가 되면 재고 부족 이벤트를 발행한다")
     void update_success() {
         // given
         UUID inventoryId = UUID.randomUUID();
@@ -59,11 +65,7 @@ class UpdateHubInventoryServiceTest {
                 .quantity(30)
                 .build();
 
-        ReflectionTestUtils.setField(
-                inventory,
-                "id",
-                inventoryId
-        );
+        ReflectionTestUtils.setField(inventory, "id", inventoryId);
 
         given(hubInventoryRepository.findById(inventoryId))
                 .willReturn(Optional.of(inventory));
@@ -85,10 +87,61 @@ class UpdateHubInventoryServiceTest {
         assertThat(response.getQuantity()).isEqualTo(10);
         assertThat(response.getSafetyStock()).isEqualTo(20);
 
-        // 실제 엔티티 상태도 변경되었는지 확인
         assertThat(inventory.getQuantity()).isEqualTo(10);
 
         verify(hubInventoryRepository).findById(inventoryId);
+
+        ArgumentCaptor<InventoryLowEvent> eventCaptor =
+                ArgumentCaptor.forClass(InventoryLowEvent.class);
+
+        verify(eventPublisher).publishEvent(eventCaptor.capture());
+
+        InventoryLowEvent event = eventCaptor.getValue();
+
+        assertThat(event.inventoryId()).isEqualTo(inventoryId);
+        assertThat(event.hubId()).isEqualTo(hubId);
+        assertThat(event.productId()).isEqualTo(productId);
+        assertThat(event.quantity()).isEqualTo(10);
+        assertThat(event.safetyStock()).isEqualTo(20);
+        assertThat(event.occurredAt()).isNotNull();
+    }
+
+    @Test
+    @DisplayName("안전재고 이하 상태에서 재고를 다시 낮춰도 재고 부족 이벤트를 중복 발행하지 않는다")
+    void update_lowStockToLowStock_doesNotPublishEvent() {
+        // given
+        UUID inventoryId = UUID.randomUUID();
+
+        Hub hub = Hub.builder()
+                .name("서울 허브")
+                .address("서울특별시")
+                .latitude(37.1)
+                .longitude(127.1)
+                .build();
+
+        HubInventory inventory = HubInventory.builder()
+                .hub(hub)
+                .productId(UUID.randomUUID())
+                .quantity(15)
+                .build();
+
+        given(hubInventoryRepository.findById(inventoryId))
+                .willReturn(Optional.of(inventory));
+
+        UpdateHubInventoryCommand command =
+                UpdateHubInventoryCommand.builder()
+                        .id(inventoryId)
+                        .quantity(10)
+                        .build();
+
+        // when
+        updateHubInventoryService.update(command);
+
+        // then
+        assertThat(inventory.getQuantity()).isEqualTo(10);
+
+        verify(eventPublisher, never())
+                .publishEvent(org.mockito.ArgumentMatchers.any(InventoryLowEvent.class));
     }
 
     @Test
@@ -161,7 +214,6 @@ class UpdateHubInventoryServiceTest {
                         ErrorResponseCode.HUB_INVENTORY_ALREADY_DELETED.getMessage()
                 );
 
-        // 수정되지 않았는지도 확인
         assertThat(inventory.getQuantity()).isEqualTo(30);
     }
 
@@ -202,7 +254,6 @@ class UpdateHubInventoryServiceTest {
                         ErrorResponseCode.INVALID_STOCK_QUANTITY.getMessage()
                 );
 
-        // 예외 발생 후 기존 값 보존
         assertThat(inventory.getQuantity()).isEqualTo(30);
     }
 }
