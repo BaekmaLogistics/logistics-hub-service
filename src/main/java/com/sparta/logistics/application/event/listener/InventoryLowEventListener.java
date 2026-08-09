@@ -12,7 +12,7 @@ import org.springframework.transaction.event.TransactionalEventListener;
 @RequiredArgsConstructor
 public class InventoryLowEventListener {
 
-    private IntegrationEventPublisher integrationEventPublisher;
+    private final IntegrationEventPublisher integrationEventPublisher;
 
     @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
     public void handle(InventoryLowEvent event){
