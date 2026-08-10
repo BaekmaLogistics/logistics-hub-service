@@ -24,7 +24,7 @@ public class HubQueryService implements HubQueryUseCase {
     @Transactional(readOnly = true)
     @Override
     public HubDetailResponse getHub(UUID hubId) {
-        Hub hub = hubRepository.findById(hubId)
+        Hub hub = hubRepository.findByIdAndDeletedAtIsNull(hubId)
                 .orElseThrow(() -> new ApiException(ErrorResponseCode.HUB_NOT_FOUND));
 
         return HubDetailResponse.from(hub);

@@ -23,7 +23,7 @@ public class CreateHubService implements CreateHubUseCase {
     @Override
     @Transactional
     public CreateHubResponse createHub(CreateHubCommand command){
-        if(hubRepository.existsByName(command.getName())){
+        if(hubRepository.existsByNameAndDeletedAtIsNull(command.getName())){
             throw new ApiException(ErrorResponseCode.HUB_ALREADY_EXISTS);
         }
 

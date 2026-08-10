@@ -53,7 +53,7 @@ class CreateHubServiceTest {
                 127.123906
         );
 
-        when(hubRepository.existsByName(command.getName()))
+        when(hubRepository.existsByNameAndDeletedAtIsNull(command.getName()))
                 .thenReturn(false);
 
         when(geocodingService.getCoordinate(command.getAddress()))
@@ -72,7 +72,7 @@ class CreateHubServiceTest {
         assertThat(response.getLatitude()).isEqualTo(37.474154);
         assertThat(response.getLongitude()).isEqualTo(127.123906);
 
-        verify(hubRepository).existsByName(command.getName());
+        verify(hubRepository).existsByNameAndDeletedAtIsNull(command.getName());
         verify(geocodingService).getCoordinate(command.getAddress());
 
         ArgumentCaptor<Hub> captor = ArgumentCaptor.forClass(Hub.class);
@@ -96,7 +96,7 @@ class CreateHubServiceTest {
                 .address("서울특별시 송파구 송파대로 55")
                 .build();
 
-        when(hubRepository.existsByName(command.getName()))
+        when(hubRepository.existsByNameAndDeletedAtIsNull(command.getName()))
                 .thenReturn(true);
 
         // when & then
@@ -108,7 +108,7 @@ class CreateHubServiceTest {
         assertThat(exception.getResponseCode())
                 .isEqualTo(ErrorResponseCode.HUB_ALREADY_EXISTS);
 
-        verify(hubRepository).existsByName(command.getName());
+        verify(hubRepository).existsByNameAndDeletedAtIsNull(command.getName());
         verify(hubRepository, never()).save(any());
         verifyNoInteractions(geocodingService);
     }

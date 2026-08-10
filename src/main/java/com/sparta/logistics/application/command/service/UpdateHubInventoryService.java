@@ -3,6 +3,7 @@ package com.sparta.logistics.application.command.service;
 import com.sparta.logistics.application.command.dto.hubinventory.UpdateHubInventoryCommand;
 import com.sparta.logistics.application.command.dto.hubinventory.UpdateHubInventoryResponse;
 import com.sparta.logistics.application.command.usecase.UpdateHubInventoryUseCase;
+import com.sparta.logistics.application.common.validator.HubAccessValidator;
 import com.sparta.logistics.application.event.InventoryLowEvent;
 import com.sparta.logistics.common.code.ErrorResponseCode;
 import com.sparta.logistics.common.exception.ApiException;
@@ -21,6 +22,7 @@ public class UpdateHubInventoryService implements UpdateHubInventoryUseCase {
 
     private final HubInventoryRepository hubInventoryRepository;
     private final ApplicationEventPublisher eventPublisher;
+    private final HubAccessValidator hubAccessValidator;
 
     @Override
     @Transactional
@@ -39,7 +41,13 @@ public class UpdateHubInventoryService implements UpdateHubInventoryUseCase {
             );
         }
 
-        boolean wasLowStock = inventory.isLowStock();;
+        hubAccessValidator.validate(
+                inventory.getHub(),
+                command.getRequesterId(),
+                command.getRequesterRole()
+        );
+
+        boolean wasLowStock = inventory.isLowStock();
 
         inventory.updateQuantity(command.getQuantity());
 

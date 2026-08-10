@@ -2,10 +2,12 @@ package com.sparta.logistics.application.command.service;
 
 import com.sparta.logistics.application.command.dto.hubinventory.CreateHubInventoryCommand;
 import com.sparta.logistics.application.command.dto.hubinventory.CreateHubInventoryResponse;
+import com.sparta.logistics.application.common.validator.HubAccessValidator;
 import com.sparta.logistics.common.code.ErrorResponseCode;
 import com.sparta.logistics.common.exception.ApiException;
 import com.sparta.logistics.domain.entity.Hub;
 import com.sparta.logistics.domain.entity.HubInventory;
+import com.sparta.logistics.domain.model.UserRole;
 import com.sparta.logistics.domain.repository.HubInventoryRepository;
 import com.sparta.logistics.domain.repository.HubRepository;
 import org.junit.jupiter.api.DisplayName;
@@ -36,6 +38,9 @@ class CreateHubInventoryServiceTest {
     @Mock
     private HubRepository hubRepository;
 
+    @Mock
+    private HubAccessValidator hubAccessValidator;
+
     @InjectMocks
     private CreateHubInventoryService createHubInventoryService;
 
@@ -45,6 +50,8 @@ class CreateHubInventoryServiceTest {
         // given
         UUID hubId = UUID.randomUUID();
         UUID productId = UUID.randomUUID();
+        UUID requesterId = UUID.randomUUID();
+        UserRole requesterRole = UserRole.HUB_MANAGER;
 
         Hub hub = Hub.builder()
                 .name("서울 허브")
@@ -60,6 +67,8 @@ class CreateHubInventoryServiceTest {
                         .hubId(hubId)
                         .productId(productId)
                         .quantity(100)
+                        .requesterId(requesterId)
+                        .requesterRole(requesterRole)
                         .build();
 
         given(hubRepository.findById(hubId))
@@ -83,9 +92,10 @@ class CreateHubInventoryServiceTest {
         assertThat(response.getHubId()).isEqualTo(hubId);
         assertThat(response.getProductId()).isEqualTo(productId);
         assertThat(response.getQuantity()).isEqualTo(100);
-
-        // 기본 안전재고 정책 검증
         assertThat(response.getSafetyStock()).isEqualTo(20);
+
+        verify(hubAccessValidator)
+                .validate(hub, requesterId, requesterRole);
 
         verify(hubInventoryRepository)
                 .save(any(HubInventory.class));
@@ -94,31 +104,44 @@ class CreateHubInventoryServiceTest {
     @Test
     @DisplayName("존재하지 않는 허브에는 재고를 등록할 수 없다")
     void create_fail_hubNotFound() {
+        // given
         UUID hubId = UUID.randomUUID();
+        UUID requesterId = UUID.randomUUID();
+        UserRole requesterRole = UserRole.HUB_MANAGER;
 
         CreateHubInventoryCommand command =
                 CreateHubInventoryCommand.builder()
                         .hubId(hubId)
                         .productId(UUID.randomUUID())
                         .quantity(100)
+                        .requesterId(requesterId)
+                        .requesterRole(requesterRole)
                         .build();
 
         given(hubRepository.findById(hubId))
                 .willReturn(Optional.empty());
 
+        // when & then
         assertThatThrownBy(() ->
                 createHubInventoryService.create(command)
         )
                 .isInstanceOf(ApiException.class)
-                .hasMessage(ErrorResponseCode.HUB_NOT_FOUND.getMessage());
+                .hasMessage(
+                        ErrorResponseCode.HUB_NOT_FOUND.getMessage()
+                );
 
+        verify(hubRepository).findById(hubId);
+        verifyNoInteractions(hubAccessValidator);
         verifyNoInteractions(hubInventoryRepository);
     }
 
     @Test
     @DisplayName("삭제된 허브에는 재고를 등록할 수 없다")
     void create_fail_deletedHub() {
+        // given
         UUID hubId = UUID.randomUUID();
+        UUID requesterId = UUID.randomUUID();
+        UserRole requesterRole = UserRole.HUB_MANAGER;
 
         Hub hub = Hub.builder()
                 .name("서울 허브")
@@ -126,6 +149,8 @@ class CreateHubInventoryServiceTest {
                 .latitude(37.1)
                 .longitude(127.1)
                 .build();
+
+        ReflectionTestUtils.setField(hub, "id", hubId);
 
         hub.softDelete(UUID.randomUUID());
 
@@ -137,8 +162,11 @@ class CreateHubInventoryServiceTest {
                         .hubId(hubId)
                         .productId(UUID.randomUUID())
                         .quantity(100)
+                        .requesterId(requesterId)
+                        .requesterRole(requesterRole)
                         .build();
 
+        // when & then
         assertThatThrownBy(() ->
                 createHubInventoryService.create(command)
         )
@@ -147,14 +175,19 @@ class CreateHubInventoryServiceTest {
                         ErrorResponseCode.HUB_ALREADY_DELETED.getMessage()
                 );
 
+        verify(hubRepository).findById(hubId);
+        verifyNoInteractions(hubAccessValidator);
         verifyNoInteractions(hubInventoryRepository);
     }
 
     @Test
     @DisplayName("동일 허브와 상품의 활성 재고가 존재하면 중복 등록할 수 없다")
     void create_fail_alreadyExists() {
+        // given
         UUID hubId = UUID.randomUUID();
         UUID productId = UUID.randomUUID();
+        UUID requesterId = UUID.randomUUID();
+        UserRole requesterRole = UserRole.HUB_MANAGER;
 
         Hub hub = Hub.builder()
                 .name("서울 허브")
@@ -162,6 +195,8 @@ class CreateHubInventoryServiceTest {
                 .latitude(37.1)
                 .longitude(127.1)
                 .build();
+
+        ReflectionTestUtils.setField(hub, "id", hubId);
 
         given(hubRepository.findById(hubId))
                 .willReturn(Optional.of(hub));
@@ -178,8 +213,11 @@ class CreateHubInventoryServiceTest {
                         .hubId(hubId)
                         .productId(productId)
                         .quantity(100)
+                        .requesterId(requesterId)
+                        .requesterRole(requesterRole)
                         .build();
 
+        // when & then
         assertThatThrownBy(() ->
                 createHubInventoryService.create(command)
         )
@@ -188,6 +226,9 @@ class CreateHubInventoryServiceTest {
                         ErrorResponseCode.HUB_INVENTORY_ALREADY_EXISTS.getMessage()
                 );
 
+        verify(hubAccessValidator)
+                .validate(hub, requesterId, requesterRole);
+
         verify(hubInventoryRepository, never())
                 .save(any(HubInventory.class));
     }
@@ -195,8 +236,11 @@ class CreateHubInventoryServiceTest {
     @Test
     @DisplayName("음수 수량으로 허브 재고를 등록할 수 없다")
     void create_fail_negativeQuantity() {
+        // given
         UUID hubId = UUID.randomUUID();
         UUID productId = UUID.randomUUID();
+        UUID requesterId = UUID.randomUUID();
+        UserRole requesterRole = UserRole.HUB_MANAGER;
 
         Hub hub = Hub.builder()
                 .name("서울 허브")
@@ -204,6 +248,8 @@ class CreateHubInventoryServiceTest {
                 .latitude(37.1)
                 .longitude(127.1)
                 .build();
+
+        ReflectionTestUtils.setField(hub, "id", hubId);
 
         given(hubRepository.findById(hubId))
                 .willReturn(Optional.of(hub));
@@ -220,8 +266,11 @@ class CreateHubInventoryServiceTest {
                         .hubId(hubId)
                         .productId(productId)
                         .quantity(-1)
+                        .requesterId(requesterId)
+                        .requesterRole(requesterRole)
                         .build();
 
+        // when & then
         assertThatThrownBy(() ->
                 createHubInventoryService.create(command)
         )
@@ -229,6 +278,9 @@ class CreateHubInventoryServiceTest {
                 .hasMessage(
                         ErrorResponseCode.INVALID_STOCK_QUANTITY.getMessage()
                 );
+
+        verify(hubAccessValidator)
+                .validate(hub, requesterId, requesterRole);
 
         verify(hubInventoryRepository, never())
                 .save(any(HubInventory.class));

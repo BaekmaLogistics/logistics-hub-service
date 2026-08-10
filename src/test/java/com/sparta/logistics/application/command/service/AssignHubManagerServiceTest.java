@@ -20,7 +20,9 @@ import java.util.Optional;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.*;
 
 @Tag("unit")
@@ -161,5 +163,56 @@ class AssignHubManagerServiceTest {
                 .isEqualTo(ErrorResponseCode.HUB_MANAGER_ALREADY_ASSIGNED);
 
         verify(hubRepository).findById(hubId);
+    }
+
+    @Test
+    @DisplayName("이미 다른 활성 허브에 배정된 관리자는 배정할 수 없다")
+    void assign_fail_managerAlreadyAssignedToOtherHub() {
+        // given
+        UUID hubId = UUID.randomUUID();
+        UUID managerId = UUID.randomUUID();
+
+        Hub hub = Hub.builder()
+                .name("서울 허브")
+                .address("서울")
+                .latitude(37.1)
+                .longitude(127.1)
+                .build();
+
+        ReflectionTestUtils.setField(hub, "id", hubId);
+
+        AssignHubManagerCommand command =
+                AssignHubManagerCommand.builder()
+                        .hubId(hubId)
+                        .managerId(managerId)
+                        .build();
+
+        given(hubRepository.findById(hubId))
+                .willReturn(Optional.of(hub));
+
+        given(
+                hubRepository.existsByManagerIdAndDeletedAtIsNull(
+                        managerId
+                )
+        ).willReturn(true);
+
+        // when & then
+        assertThatThrownBy(() ->
+                assignHubManagerService.assign(command)
+        )
+                .isInstanceOf(ApiException.class)
+                .hasMessage(
+                        ErrorResponseCode
+                                .HUB_MANAGER_ALREADY_ASSIGNED
+                                .getMessage()
+                );
+
+        verify(hubRepository)
+                .findById(hubId);
+
+        verify(hubRepository)
+                .existsByManagerIdAndDeletedAtIsNull(managerId);
+
+        assertThat(hub.getManagerId()).isNull();
     }
 }

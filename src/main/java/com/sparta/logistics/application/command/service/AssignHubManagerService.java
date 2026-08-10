@@ -34,6 +34,10 @@ public class AssignHubManagerService implements AssignHubManagerUseCase {
             throw new ApiException(ErrorResponseCode.HUB_MANAGER_ALREADY_ASSIGNED);
         }
 
+        if(hubRepository.existsByManagerIdAndDeletedAtIsNull(command.getManagerId())){
+            throw new ApiException(ErrorResponseCode.HUB_MANAGER_ALREADY_ASSIGNED);
+        }
+
         // TODO User Service 연동
         // 1. managerId 존재 여부 확인
         // 2. HUB_MANAGER 권한 검증
