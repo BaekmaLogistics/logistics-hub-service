@@ -17,6 +17,8 @@ import java.util.UUID;
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class Hub extends BaseUpdatableEntity {
 
+    // TODO: DB에 Partial Unique Index 적용 필요
+    // UNIQUE(name) WHERE deleted_at IS NULL
     @Column(nullable = false, unique = true)
     private String name;
 
