@@ -9,7 +9,7 @@ import java.util.UUID;
 
 public interface HubRepository extends JpaRepository<Hub, UUID>, HubRepositoryCustom {
 
-    boolean existsByName(String name);
+    boolean existsByNameAndDeletedAtIsNull(String name);
 
     Optional<Hub> findByName(String name);
 

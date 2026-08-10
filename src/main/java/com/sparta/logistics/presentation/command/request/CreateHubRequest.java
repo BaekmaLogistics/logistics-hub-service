@@ -20,7 +20,6 @@ public class CreateHubRequest {
     @NotBlank(message = "주소는 필수입니다.")
     private String address;
 
-    @NotNull(message = "허브 관리자는 필수입니다.")
     private UUID managerId;
 
     public CreateHubCommand toCommand() {
