@@ -73,6 +73,10 @@ dependencies {
     implementation 'org.springframework.boot:spring-boot-starter-data-redis'
     implementation 'org.springframework.boot:spring-boot-starter-cache'
     implementation 'org.redisson:redisson:3.46.0'
+
+    // Spring Security
+    implementation 'org.springframework.boot:spring-boot-starter-security'
+    testImplementation 'org.springframework.security:spring-security-test'
 }
 
 tasks.named('test') {

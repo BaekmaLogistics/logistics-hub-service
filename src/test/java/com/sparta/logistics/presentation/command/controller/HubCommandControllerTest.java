@@ -8,6 +8,10 @@ import com.sparta.logistics.application.command.usecase.DeleteHubUseCase;
 import com.sparta.logistics.application.command.usecase.UpdateHubUseCase;
 import com.sparta.logistics.common.code.ErrorResponseCode;
 import com.sparta.logistics.common.exception.ApiException;
+import com.sparta.logistics.infrastructure.security.CustomAccessDeniedHandler;
+import com.sparta.logistics.infrastructure.security.CustomAuthenticationEntryPoint;
+import com.sparta.logistics.infrastructure.security.GatewayHeaderAuthenticationFilter;
+import com.sparta.logistics.infrastructure.security.SecurityConfig;
 import com.sparta.logistics.presentation.command.request.AssignHubManagerRequest;
 import com.sparta.logistics.presentation.command.request.CreateHubRequest;
 import com.sparta.logistics.presentation.command.request.UpdateHubRequest;
@@ -16,8 +20,6 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
-import org.mockito.Mock;
-import org.springframework.http.MediaType;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.context.annotation.Import;
@@ -28,7 +30,7 @@ import org.springframework.test.web.servlet.MockMvc;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.*;
 import static org.springframework.http.MediaType.APPLICATION_JSON;
@@ -38,7 +40,12 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 @Tag("unit")
 @WebMvcTest(HubCommandController.class)
-@Import(GlobalExceptionHandler.class)
+@Import({
+        SecurityConfig.class,
+        GatewayHeaderAuthenticationFilter.class,
+        CustomAuthenticationEntryPoint.class,
+        CustomAccessDeniedHandler.class
+})
 @TestPropertySource(properties = {
         "NAVER_MAP_URL=http://localhost"
 })
@@ -51,20 +58,22 @@ class HubCommandControllerTest {
     private ObjectMapper objectMapper;
 
     @MockitoBean
-    CreateHubUseCase createHubUseCase;
+    private CreateHubUseCase createHubUseCase;
 
     @MockitoBean
-    UpdateHubUseCase updateHubUseCase;
+    private UpdateHubUseCase updateHubUseCase;
 
     @MockitoBean
-    DeleteHubUseCase deleteHubUseCase;
+    private DeleteHubUseCase deleteHubUseCase;
 
     @MockitoBean
-    AssignHubManagerUseCase assignHubManagerUseCase;
+    private AssignHubManagerUseCase assignHubManagerUseCase;
 
     @Test
     @DisplayName("허브 생성 성공")
     void createHub_success() throws Exception {
+        // given
+        UUID requesterId = UUID.randomUUID();
         UUID managerId = UUID.randomUUID();
         UUID hubId = UUID.randomUUID();
 
@@ -83,12 +92,17 @@ class HubCommandControllerTest {
                 .managerId(managerId)
                 .build();
 
-        when(createHubUseCase.createHub(any(CreateHubCommand.class)))
-                .thenReturn(response);
+        given(createHubUseCase.createHub(any(CreateHubCommand.class)))
+                .willReturn(response);
 
-        mockMvc.perform(post("/api/v1/hubs")
-                        .contentType(APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(request)))
+        // when & then
+        mockMvc.perform(
+                        post("/api/v1/hubs")
+                                .header("X-User-Id", requesterId.toString())
+                                .header("X-User-Role", "MASTER")
+                                .contentType(APPLICATION_JSON)
+                                .content(objectMapper.writeValueAsString(request))
+                )
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.message")
                         .value("성공적으로 생성되었습니다."))
@@ -97,13 +111,15 @@ class HubCommandControllerTest {
                 .andExpect(jsonPath("$.data.address")
                         .value("서울특별시 송파구 송파대로 55"));
 
-        verify(createHubUseCase).createHub(any(CreateHubCommand.class));
+        verify(createHubUseCase)
+                .createHub(any(CreateHubCommand.class));
     }
 
     @Test
     @DisplayName("허브명이 없으면 Validation 실패")
     void createHub_fail_nameBlank() throws Exception {
-
+        // given
+        UUID requesterId = UUID.randomUUID();
         UUID managerId = UUID.randomUUID();
 
         CreateHubRequest request = CreateHubRequest.builder()
@@ -112,9 +128,14 @@ class HubCommandControllerTest {
                 .managerId(managerId)
                 .build();
 
-        mockMvc.perform(post("/api/v1/hubs")
-                        .contentType(APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(request)))
+        // when & then
+        mockMvc.perform(
+                        post("/api/v1/hubs")
+                                .header("X-User-Id", requesterId.toString())
+                                .header("X-User-Role", "MASTER")
+                                .contentType(APPLICATION_JSON)
+                                .content(objectMapper.writeValueAsString(request))
+                )
                 .andExpect(status().isBadRequest());
 
         verifyNoInteractions(createHubUseCase);
@@ -123,7 +144,8 @@ class HubCommandControllerTest {
     @Test
     @DisplayName("이미 존재하는 허브명")
     void createHub_fail_duplicate() throws Exception {
-
+        // given
+        UUID requesterId = UUID.randomUUID();
         UUID managerId = UUID.randomUUID();
 
         CreateHubRequest request = CreateHubRequest.builder()
@@ -132,20 +154,32 @@ class HubCommandControllerTest {
                 .managerId(managerId)
                 .build();
 
-        when(createHubUseCase.createHub(any(CreateHubCommand.class)))
-                .thenThrow(new ApiException(ErrorResponseCode.HUB_ALREADY_EXISTS));
+        given(createHubUseCase.createHub(any(CreateHubCommand.class)))
+                .willThrow(
+                        new ApiException(
+                                ErrorResponseCode.HUB_ALREADY_EXISTS
+                        )
+                );
 
-        mockMvc.perform(post("/api/v1/hubs")
-                        .contentType(APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(request)))
+        // when & then
+        mockMvc.perform(
+                        post("/api/v1/hubs")
+                                .header("X-User-Id", requesterId.toString())
+                                .header("X-User-Role", "MASTER")
+                                .contentType(APPLICATION_JSON)
+                                .content(objectMapper.writeValueAsString(request))
+                )
                 .andExpect(status().isConflict());
 
-        verify(createHubUseCase).createHub(any(CreateHubCommand.class));
+        verify(createHubUseCase)
+                .createHub(any(CreateHubCommand.class));
     }
 
     @Test
     @DisplayName("허브 수정 성공")
     void updateHub_success() throws Exception {
+        // given
+        UUID requesterId = UUID.randomUUID();
         UUID hubId = UUID.randomUUID();
         UUID managerId = UUID.randomUUID();
 
@@ -167,20 +201,31 @@ class HubCommandControllerTest {
         given(updateHubUseCase.updateHub(any(UpdateHubCommand.class)))
                 .willReturn(response);
 
+        // when & then
         mockMvc.perform(
                         patch("/api/v1/hubs/{hubId}", hubId)
+                                .header("X-User-Id", requesterId.toString())
+                                .header("X-User-Role", "MASTER")
                                 .contentType(APPLICATION_JSON)
                                 .content(objectMapper.writeValueAsString(request))
                 )
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.message").value("요청이 성공적으로 처리되었습니다."))
-                .andExpect(jsonPath("$.data.name").value("서울 허브"))
-                .andExpect(jsonPath("$.data.address").value("경기도 성남시"));
+                .andExpect(jsonPath("$.message")
+                        .value("요청이 성공적으로 처리되었습니다."))
+                .andExpect(jsonPath("$.data.name")
+                        .value("서울 허브"))
+                .andExpect(jsonPath("$.data.address")
+                        .value("경기도 성남시"));
+
+        verify(updateHubUseCase)
+                .updateHub(any(UpdateHubCommand.class));
     }
 
     @Test
     @DisplayName("존재하지 않는 허브 수정 시 예외 발생")
-    void updateHub_fail() throws Exception{
+    void updateHub_fail() throws Exception {
+        // given
+        UUID requesterId = UUID.randomUUID();
         UUID hubId = UUID.randomUUID();
         UUID managerId = UUID.randomUUID();
 
@@ -191,22 +236,31 @@ class HubCommandControllerTest {
                 .build();
 
         given(updateHubUseCase.updateHub(any(UpdateHubCommand.class)))
-                .willThrow(new ApiException(ErrorResponseCode.HUB_NOT_FOUND));
+                .willThrow(
+                        new ApiException(
+                                ErrorResponseCode.HUB_NOT_FOUND
+                        )
+                );
 
+        // when & then
         mockMvc.perform(
                         patch("/api/v1/hubs/{hubId}", hubId)
+                                .header("X-User-Id", requesterId.toString())
+                                .header("X-User-Role", "MASTER")
                                 .contentType(APPLICATION_JSON)
                                 .content(objectMapper.writeValueAsString(request))
                 )
                 .andExpect(status().isNotFound());
 
-        verify(updateHubUseCase).updateHub(any(UpdateHubCommand.class));
+        verify(updateHubUseCase)
+                .updateHub(any(UpdateHubCommand.class));
     }
 
     @Test
     @DisplayName("삭제된 허브 수정 시 예외 발생")
     void updateHub_fail_deletedHub() throws Exception {
-
+        // given
+        UUID requesterId = UUID.randomUUID();
         UUID hubId = UUID.randomUUID();
         UUID managerId = UUID.randomUUID();
 
@@ -217,21 +271,31 @@ class HubCommandControllerTest {
                 .build();
 
         given(updateHubUseCase.updateHub(any(UpdateHubCommand.class)))
-                .willThrow(new ApiException(ErrorResponseCode.HUB_ALREADY_DELETED));
+                .willThrow(
+                        new ApiException(
+                                ErrorResponseCode.HUB_ALREADY_DELETED
+                        )
+                );
 
+        // when & then
         mockMvc.perform(
                         patch("/api/v1/hubs/{hubId}", hubId)
+                                .header("X-User-Id", requesterId.toString())
+                                .header("X-User-Role", "MASTER")
                                 .contentType(APPLICATION_JSON)
                                 .content(objectMapper.writeValueAsString(request))
                 )
                 .andExpect(status().isBadRequest());
 
-        verify(updateHubUseCase).updateHub(any(UpdateHubCommand.class));
+        verify(updateHubUseCase)
+                .updateHub(any(UpdateHubCommand.class));
     }
 
     @Test
     @DisplayName("경로의 허브 ID가 커맨드에 반영된다")
     void updateHub_success_passesHubIdFromPath() throws Exception {
+        // given
+        UUID requesterId = UUID.randomUUID();
         UUID hubId = UUID.randomUUID();
         UUID managerId = UUID.randomUUID();
 
@@ -253,25 +317,37 @@ class HubCommandControllerTest {
         given(updateHubUseCase.updateHub(any(UpdateHubCommand.class)))
                 .willReturn(response);
 
+        // when & then
         mockMvc.perform(
                         patch("/api/v1/hubs/{hubId}", hubId)
+                                .header("X-User-Id", requesterId.toString())
+                                .header("X-User-Role", "MASTER")
                                 .contentType(APPLICATION_JSON)
                                 .content(objectMapper.writeValueAsString(request))
                 )
                 .andExpect(status().isOk());
 
-        ArgumentCaptor<UpdateHubCommand> captor = ArgumentCaptor.forClass(UpdateHubCommand.class);
-        verify(updateHubUseCase).updateHub(captor.capture());
+        ArgumentCaptor<UpdateHubCommand> captor =
+                ArgumentCaptor.forClass(UpdateHubCommand.class);
+
+        verify(updateHubUseCase)
+                .updateHub(captor.capture());
 
         UpdateHubCommand capturedCommand = captor.getValue();
-        assertThat(capturedCommand.getId()).isEqualTo(hubId);
-        assertThat(capturedCommand.getName()).isEqualTo("서울 허브");
-        assertThat(capturedCommand.getAddress()).isEqualTo("경기도 성남시");
+
+        assertThat(capturedCommand.getId())
+                .isEqualTo(hubId);
+        assertThat(capturedCommand.getName())
+                .isEqualTo("서울 허브");
+        assertThat(capturedCommand.getAddress())
+                .isEqualTo("경기도 성남시");
     }
 
     @Test
     @DisplayName("허브 수정 성공 시 위치 및 담당자 정보도 응답에 포함된다")
     void updateHub_success_returnsFullResponseFields() throws Exception {
+        // given
+        UUID requesterId = UUID.randomUUID();
         UUID hubId = UUID.randomUUID();
         UUID managerId = UUID.randomUUID();
 
@@ -293,21 +369,30 @@ class HubCommandControllerTest {
         given(updateHubUseCase.updateHub(any(UpdateHubCommand.class)))
                 .willReturn(response);
 
+        // when & then
         mockMvc.perform(
                         patch("/api/v1/hubs/{hubId}", hubId)
+                                .header("X-User-Id", requesterId.toString())
+                                .header("X-User-Role", "MASTER")
                                 .contentType(APPLICATION_JSON)
                                 .content(objectMapper.writeValueAsString(request))
                 )
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.data.id").value(hubId.toString()))
-                .andExpect(jsonPath("$.data.latitude").value(37.222))
-                .andExpect(jsonPath("$.data.longitude").value(127.333))
-                .andExpect(jsonPath("$.data.managerId").value(managerId.toString()));
+                .andExpect(jsonPath("$.data.id")
+                        .value(hubId.toString()))
+                .andExpect(jsonPath("$.data.latitude")
+                        .value(37.222))
+                .andExpect(jsonPath("$.data.longitude")
+                        .value(127.333))
+                .andExpect(jsonPath("$.data.managerId")
+                        .value(managerId.toString()));
     }
 
     @Test
     @DisplayName("일부 필드만 포함된 요청도 유효성 검증을 통과한다")
     void updateHub_success_partialFieldsAllowed() throws Exception {
+        // given
+        UUID requesterId = UUID.randomUUID();
         UUID hubId = UUID.randomUUID();
 
         UpdateHubRequest request = UpdateHubRequest.builder()
@@ -322,32 +407,45 @@ class HubCommandControllerTest {
         given(updateHubUseCase.updateHub(any(UpdateHubCommand.class)))
                 .willReturn(response);
 
+        // when & then
         mockMvc.perform(
                         patch("/api/v1/hubs/{hubId}", hubId)
+                                .header("X-User-Id", requesterId.toString())
+                                .header("X-User-Role", "MASTER")
                                 .contentType(APPLICATION_JSON)
                                 .content(objectMapper.writeValueAsString(request))
                 )
                 .andExpect(status().isOk());
 
-        ArgumentCaptor<UpdateHubCommand> captor = ArgumentCaptor.forClass(UpdateHubCommand.class);
-        verify(updateHubUseCase).updateHub(captor.capture());
+        ArgumentCaptor<UpdateHubCommand> captor =
+                ArgumentCaptor.forClass(UpdateHubCommand.class);
+
+        verify(updateHubUseCase)
+                .updateHub(captor.capture());
 
         UpdateHubCommand capturedCommand = captor.getValue();
+
         assertThat(capturedCommand.getName()).isNull();
-        assertThat(capturedCommand.getAddress()).isEqualTo("경기도 성남시");
+        assertThat(capturedCommand.getAddress())
+                .isEqualTo("경기도 성남시");
     }
 
     @Test
     @DisplayName("허브 삭제 성공")
     void deleteHub_success() throws Exception {
-
+        // given
+        UUID requesterId = UUID.randomUUID();
         UUID hubId = UUID.randomUUID();
 
-        doNothing().when(deleteHubUseCase)
+        doNothing()
+                .when(deleteHubUseCase)
                 .deleteHub(any(DeleteHubCommand.class));
 
+        // when & then
         mockMvc.perform(
                         delete("/api/v1/hubs/{hubId}", hubId)
+                                .header("X-User-Id", requesterId.toString())
+                                .header("X-User-Role", "MASTER")
                 )
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.message")
@@ -360,15 +458,23 @@ class HubCommandControllerTest {
     @Test
     @DisplayName("존재하지 않는 허브 삭제")
     void deleteHub_fail_notFound() throws Exception {
-
+        // given
+        UUID requesterId = UUID.randomUUID();
         UUID hubId = UUID.randomUUID();
 
-        doThrow(new ApiException(ErrorResponseCode.HUB_NOT_FOUND))
+        doThrow(
+                new ApiException(
+                        ErrorResponseCode.HUB_NOT_FOUND
+                )
+        )
                 .when(deleteHubUseCase)
                 .deleteHub(any(DeleteHubCommand.class));
 
+        // when & then
         mockMvc.perform(
                         delete("/api/v1/hubs/{hubId}", hubId)
+                                .header("X-User-Id", requesterId.toString())
+                                .header("X-User-Role", "MASTER")
                 )
                 .andExpect(status().isNotFound());
 
@@ -379,15 +485,23 @@ class HubCommandControllerTest {
     @Test
     @DisplayName("이미 삭제된 허브 삭제")
     void deleteHub_fail_alreadyDeleted() throws Exception {
-
+        // given
+        UUID requesterId = UUID.randomUUID();
         UUID hubId = UUID.randomUUID();
 
-        doThrow(new ApiException(ErrorResponseCode.HUB_ALREADY_DELETED))
+        doThrow(
+                new ApiException(
+                        ErrorResponseCode.HUB_ALREADY_DELETED
+                )
+        )
                 .when(deleteHubUseCase)
                 .deleteHub(any(DeleteHubCommand.class));
 
+        // when & then
         mockMvc.perform(
                         delete("/api/v1/hubs/{hubId}", hubId)
+                                .header("X-User-Id", requesterId.toString())
+                                .header("X-User-Role", "MASTER")
                 )
                 .andExpect(status().isBadRequest());
 
@@ -398,7 +512,8 @@ class HubCommandControllerTest {
     @Test
     @DisplayName("허브 관리자를 배정한다.")
     void assignManager_success() throws Exception {
-
+        // given
+        UUID requesterId = UUID.randomUUID();
         UUID hubId = UUID.randomUUID();
         UUID managerId = UUID.randomUUID();
 
@@ -413,19 +528,48 @@ class HubCommandControllerTest {
                         .managerId(managerId)
                         .build();
 
-        when(assignHubManagerUseCase.assign(any(AssignHubManagerCommand.class)))
-                .thenReturn(response);
+        given(assignHubManagerUseCase
+                .assign(any(AssignHubManagerCommand.class)))
+                .willReturn(response);
 
+        // when & then
         mockMvc.perform(
                         patch("/api/v1/hubs/{hubId}/manager", hubId)
+                                .header("X-User-Id", requesterId.toString())
+                                .header("X-User-Role", "MASTER")
                                 .contentType(APPLICATION_JSON)
                                 .content(objectMapper.writeValueAsString(request))
                 )
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.data.hubId").value(hubId.toString()))
-                .andExpect(jsonPath("$.data.managerId").value(managerId.toString()));
+                .andExpect(jsonPath("$.data.hubId")
+                        .value(hubId.toString()))
+                .andExpect(jsonPath("$.data.managerId")
+                        .value(managerId.toString()));
 
         verify(assignHubManagerUseCase)
                 .assign(any(AssignHubManagerCommand.class));
+    }
+
+    @Test
+    @DisplayName("허브 생성은 MASTER 권한이 아니면 접근할 수 없다")
+    void createHub_fail_forbidden() throws Exception {
+        UUID requesterId = UUID.randomUUID();
+
+        CreateHubRequest request = CreateHubRequest.builder()
+                .name("서울 허브")
+                .address("서울특별시 송파구 송파대로 55")
+                .managerId(UUID.randomUUID())
+                .build();
+
+        mockMvc.perform(
+                        post("/api/v1/hubs")
+                                .header("X-User-Id", requesterId.toString())
+                                .header("X-User-Role", "HUB_MANAGER")
+                                .contentType(APPLICATION_JSON)
+                                .content(objectMapper.writeValueAsString(request))
+                )
+                .andExpect(status().isForbidden());
+
+        verifyNoInteractions(createHubUseCase);
     }
 }

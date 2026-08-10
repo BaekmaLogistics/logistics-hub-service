@@ -2,11 +2,13 @@ package com.sparta.logistics.application.command.service;
 
 import com.sparta.logistics.application.command.dto.hubinventory.UpdateHubInventoryCommand;
 import com.sparta.logistics.application.command.dto.hubinventory.UpdateHubInventoryResponse;
+import com.sparta.logistics.application.common.validator.HubAccessValidator;
 import com.sparta.logistics.application.event.InventoryLowEvent;
 import com.sparta.logistics.common.code.ErrorResponseCode;
 import com.sparta.logistics.common.exception.ApiException;
 import com.sparta.logistics.domain.entity.Hub;
 import com.sparta.logistics.domain.entity.HubInventory;
+import com.sparta.logistics.domain.model.UserRole;
 import com.sparta.logistics.domain.repository.HubInventoryRepository;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Tag;
@@ -25,9 +27,9 @@ import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.BDDMockito.given;
-import static org.mockito.Mockito.never;
-import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.*;
 
 @Tag("unit")
 @ExtendWith(MockitoExtension.class)
@@ -39,6 +41,9 @@ class UpdateHubInventoryServiceTest {
     @Mock
     private ApplicationEventPublisher eventPublisher;
 
+    @Mock
+    private HubAccessValidator hubAccessValidator;
+
     @InjectMocks
     private UpdateHubInventoryService updateHubInventoryService;
 
@@ -49,6 +54,8 @@ class UpdateHubInventoryServiceTest {
         UUID inventoryId = UUID.randomUUID();
         UUID hubId = UUID.randomUUID();
         UUID productId = UUID.randomUUID();
+        UUID requesterId = UUID.randomUUID();
+        UserRole requesterRole = UserRole.HUB_MANAGER;
 
         Hub hub = Hub.builder()
                 .name("서울 허브")
@@ -74,6 +81,8 @@ class UpdateHubInventoryServiceTest {
                 UpdateHubInventoryCommand.builder()
                         .id(inventoryId)
                         .quantity(10)
+                        .requesterId(requesterId)
+                        .requesterRole(requesterRole)
                         .build();
 
         // when
@@ -89,12 +98,21 @@ class UpdateHubInventoryServiceTest {
 
         assertThat(inventory.getQuantity()).isEqualTo(10);
 
-        verify(hubInventoryRepository).findById(inventoryId);
+        verify(hubInventoryRepository)
+                .findById(inventoryId);
+
+        verify(hubAccessValidator)
+                .validate(
+                        hub,
+                        requesterId,
+                        requesterRole
+                );
 
         ArgumentCaptor<InventoryLowEvent> eventCaptor =
                 ArgumentCaptor.forClass(InventoryLowEvent.class);
 
-        verify(eventPublisher).publishEvent(eventCaptor.capture());
+        verify(eventPublisher)
+                .publishEvent(eventCaptor.capture());
 
         InventoryLowEvent event = eventCaptor.getValue();
 
@@ -111,6 +129,8 @@ class UpdateHubInventoryServiceTest {
     void update_lowStockToLowStock_doesNotPublishEvent() {
         // given
         UUID inventoryId = UUID.randomUUID();
+        UUID requesterId = UUID.randomUUID();
+        UserRole requesterRole = UserRole.HUB_MANAGER;
 
         Hub hub = Hub.builder()
                 .name("서울 허브")
@@ -132,6 +152,8 @@ class UpdateHubInventoryServiceTest {
                 UpdateHubInventoryCommand.builder()
                         .id(inventoryId)
                         .quantity(10)
+                        .requesterId(requesterId)
+                        .requesterRole(requesterRole)
                         .build();
 
         // when
@@ -140,8 +162,15 @@ class UpdateHubInventoryServiceTest {
         // then
         assertThat(inventory.getQuantity()).isEqualTo(10);
 
+        verify(hubAccessValidator)
+                .validate(
+                        hub,
+                        requesterId,
+                        requesterRole
+                );
+
         verify(eventPublisher, never())
-                .publishEvent(org.mockito.ArgumentMatchers.any(InventoryLowEvent.class));
+                .publishEvent(any(InventoryLowEvent.class));
     }
 
     @Test
@@ -149,6 +178,8 @@ class UpdateHubInventoryServiceTest {
     void update_fail_notFound() {
         // given
         UUID inventoryId = UUID.randomUUID();
+        UUID requesterId = UUID.randomUUID();
+        UserRole requesterRole = UserRole.HUB_MANAGER;
 
         given(hubInventoryRepository.findById(inventoryId))
                 .willReturn(Optional.empty());
@@ -157,6 +188,8 @@ class UpdateHubInventoryServiceTest {
                 UpdateHubInventoryCommand.builder()
                         .id(inventoryId)
                         .quantity(10)
+                        .requesterId(requesterId)
+                        .requesterRole(requesterRole)
                         .build();
 
         // when & then
@@ -168,7 +201,11 @@ class UpdateHubInventoryServiceTest {
                         ErrorResponseCode.HUB_INVENTORY_NOT_FOUND.getMessage()
                 );
 
-        verify(hubInventoryRepository).findById(inventoryId);
+        verify(hubInventoryRepository)
+                .findById(inventoryId);
+
+        verifyNoInteractions(hubAccessValidator);
+        verifyNoInteractions(eventPublisher);
     }
 
     @Test
@@ -176,6 +213,8 @@ class UpdateHubInventoryServiceTest {
     void update_fail_alreadyDeleted() {
         // given
         UUID inventoryId = UUID.randomUUID();
+        UUID requesterId = UUID.randomUUID();
+        UserRole requesterRole = UserRole.HUB_MANAGER;
 
         Hub hub = Hub.builder()
                 .name("서울 허브")
@@ -203,6 +242,8 @@ class UpdateHubInventoryServiceTest {
                 UpdateHubInventoryCommand.builder()
                         .id(inventoryId)
                         .quantity(10)
+                        .requesterId(requesterId)
+                        .requesterRole(requesterRole)
                         .build();
 
         // when & then
@@ -215,6 +256,12 @@ class UpdateHubInventoryServiceTest {
                 );
 
         assertThat(inventory.getQuantity()).isEqualTo(30);
+
+        verify(hubInventoryRepository)
+                .findById(inventoryId);
+
+        verifyNoInteractions(hubAccessValidator);
+        verifyNoInteractions(eventPublisher);
     }
 
     @Test
@@ -222,6 +269,8 @@ class UpdateHubInventoryServiceTest {
     void update_fail_negativeQuantity() {
         // given
         UUID inventoryId = UUID.randomUUID();
+        UUID requesterId = UUID.randomUUID();
+        UserRole requesterRole = UserRole.HUB_MANAGER;
 
         Hub hub = Hub.builder()
                 .name("서울 허브")
@@ -243,6 +292,8 @@ class UpdateHubInventoryServiceTest {
                 UpdateHubInventoryCommand.builder()
                         .id(inventoryId)
                         .quantity(-1)
+                        .requesterId(requesterId)
+                        .requesterRole(requesterRole)
                         .build();
 
         // when & then
@@ -255,5 +306,15 @@ class UpdateHubInventoryServiceTest {
                 );
 
         assertThat(inventory.getQuantity()).isEqualTo(30);
+
+        verify(hubAccessValidator)
+                .validate(
+                        hub,
+                        requesterId,
+                        requesterRole
+                );
+
+        verify(eventPublisher, never())
+                .publishEvent(any(InventoryLowEvent.class));
     }
 }

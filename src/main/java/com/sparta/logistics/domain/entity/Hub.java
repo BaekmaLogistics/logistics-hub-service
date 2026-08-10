@@ -19,6 +19,10 @@ public class Hub extends BaseUpdatableEntity {
 
     // TODO: DB에 Partial Unique Index 적용 필요
     // UNIQUE(name) WHERE deleted_at IS NULL
+
+    // TODO: DB에 Partial Unique Index 적용 필요
+    // 한 명의 허브 관리자가 여러 활성 허브에 배정되는 것 방지
+    // UNIQUE(manager_id) WHERE deleted_at IS NULL
     @Column(nullable = false, unique = true)
     private String name;
 

@@ -3,6 +3,7 @@ package com.sparta.logistics.application.command.service;
 import com.sparta.logistics.application.command.dto.hubinventory.CreateHubInventoryCommand;
 import com.sparta.logistics.application.command.dto.hubinventory.CreateHubInventoryResponse;
 import com.sparta.logistics.application.command.usecase.CreateHubInventoryUseCase;
+import com.sparta.logistics.application.common.validator.HubAccessValidator;
 import com.sparta.logistics.application.event.InventoryLowEvent;
 import com.sparta.logistics.common.code.ErrorResponseCode;
 import com.sparta.logistics.common.exception.ApiException;
@@ -24,6 +25,7 @@ public class CreateHubInventoryService implements CreateHubInventoryUseCase {
     private final HubInventoryRepository hubInventoryRepository;
     private final HubRepository hubRepository;
     private final ApplicationEventPublisher eventPublisher;
+    private final HubAccessValidator hubAccessValidator;
 
     @Override
     @Transactional
@@ -36,6 +38,12 @@ public class CreateHubInventoryService implements CreateHubInventoryUseCase {
         if(hub.isDeleted()){
             throw new ApiException(ErrorResponseCode.HUB_ALREADY_DELETED);
         }
+
+        hubAccessValidator.validate(
+                hub,
+                command.getRequesterId(),
+                command.getRequesterRole()
+        );
 
         // TODO: Product 서비스 Internal API 연동 후 productId 유효성 검증
         // 존재하지 않거나 삭제된 상품의 재고 등록 방지

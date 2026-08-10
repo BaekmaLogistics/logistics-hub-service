@@ -13,6 +13,8 @@ import com.sparta.logistics.presentation.common.dto.response.GeneralResponse;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.UUID;
@@ -27,6 +29,7 @@ public class HubRouteCommandController {
     private final DeleteHubRouteUseCase deleteHubRouteUseCase;
 
     @PostMapping
+    @PreAuthorize("hasRole('MASTER')")
     public ResponseEntity<GeneralResponse<CreateHubRouteResponse>> createHubRoute(
             @Valid @RequestBody CreateHubRouteRequest request
             ){
@@ -37,6 +40,7 @@ public class HubRouteCommandController {
     }
 
     @PatchMapping("/{hubRouteId}")
+    @PreAuthorize("hasRole('MASTER')")
     public ResponseEntity<GeneralResponse<UpdateHubRouteResponse>> updateHubRoute(
             @PathVariable UUID hubRouteId,
             @Valid @RequestBody UpdateHubRouteRequest request
@@ -53,14 +57,16 @@ public class HubRouteCommandController {
     }
 
     @DeleteMapping("/{hubRouteId}")
+    @PreAuthorize("hasRole('MASTER')")
     public ResponseEntity<GeneralResponse<Void>> deleteHubRoute(
-            @PathVariable UUID hubRouteId
+            @PathVariable UUID hubRouteId,
+            Authentication authentication
     ) {
-        UUID deletedBy = UUID.randomUUID(); //TODO: 인증 principal 적용
+        UUID userId = (UUID) authentication.getPrincipal();
 
         DeleteHubRouteCommand command = DeleteHubRouteCommand.builder()
                 .id(hubRouteId)
-                .deletedBy(deletedBy)
+                .deletedBy(userId)
                 .build();
 
         deleteHubRouteUseCase.deleteHubRoute(command);
