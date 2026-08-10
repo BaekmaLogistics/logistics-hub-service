@@ -43,6 +43,7 @@ public class DeleteHubRouteService implements DeleteHubRouteUseCase {
         //동기화
         eventPublisher.publishEvent(
                 new HubRouteChangedIntegrationEvent(
+                        null, //TODO Security 적용 후 actorId 전달
                         hubRoute.getId(),
                         HubRouteChangeType.DELETED,
                         Instant.now()

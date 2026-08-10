@@ -101,6 +101,7 @@ public class UpdateHubRouteService implements UpdateHubRouteUseCase {
         //다른 인스턴스 동기화
         eventPublisher.publishEvent(
                 new HubRouteChangedIntegrationEvent(
+                        null, //TODO Security 적용 후 actorId 전달
                         hubRoute.getId(),
                         HubRouteChangeType.UPDATED,
                         Instant.now()
