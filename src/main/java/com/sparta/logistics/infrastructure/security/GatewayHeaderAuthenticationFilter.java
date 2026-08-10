@@ -1,5 +1,6 @@
 package com.sparta.logistics.infrastructure.security;
 
+import com.sparta.logistics.domain.model.UserRole;
 import com.sparta.logistics.presentation.common.constant.HeaderConstants;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;

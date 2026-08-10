@@ -6,11 +6,16 @@ import com.sparta.logistics.application.command.usecase.CreateHubInventoryUseCas
 import com.sparta.logistics.application.command.usecase.UpdateHubInventoryUseCase;
 import com.sparta.logistics.application.command.usecase.UpdateSafetyStockUseCase;
 import com.sparta.logistics.common.code.ErrorResponseCode;
-import com.sparta.logistics.presentation.command.request.CreateHubInventoryRequest;
+import com.sparta.logistics.domain.model.UserRole;
+import com.sparta.logistics.infrastructure.security.CustomAccessDeniedHandler;
+import com.sparta.logistics.infrastructure.security.CustomAuthenticationEntryPoint;
+import com.sparta.logistics.infrastructure.security.GatewayHeaderAuthenticationFilter;
+import com.sparta.logistics.infrastructure.security.SecurityConfig;
 import com.sparta.logistics.presentation.common.exception.GlobalExceptionHandler;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
+import org.mockito.ArgumentCaptor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.context.annotation.Import;
@@ -21,6 +26,7 @@ import org.springframework.test.web.servlet.MockMvc;
 
 import java.util.UUID;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.verify;
@@ -32,7 +38,12 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 @Tag("unit")
 @WebMvcTest(HubInventoryCommandController.class)
-@Import(GlobalExceptionHandler.class)
+@Import({
+        SecurityConfig.class,
+        GatewayHeaderAuthenticationFilter.class,
+        CustomAuthenticationEntryPoint.class,
+        CustomAccessDeniedHandler.class
+})
 @TestPropertySource(properties = {
         "NAVER_MAP_URL=http://localhost"
 })
@@ -57,6 +68,7 @@ class HubInventoryCommandControllerTest {
     @DisplayName("허브 재고 등록 성공")
     void createHubInventory_success() throws Exception {
         // given
+        UUID requesterId = UUID.randomUUID();
         UUID inventoryId = UUID.randomUUID();
         UUID hubId = UUID.randomUUID();
         UUID productId = UUID.randomUUID();
@@ -85,6 +97,8 @@ class HubInventoryCommandControllerTest {
         // when & then
         mockMvc.perform(
                         post("/api/v1/hub-inventories")
+                                .header("X-User-Id", requesterId.toString())
+                                .header("X-User-Role", "MASTER")
                                 .contentType(MediaType.APPLICATION_JSON)
                                 .content(request)
                 )
@@ -100,13 +114,26 @@ class HubInventoryCommandControllerTest {
                 .andExpect(jsonPath("$.data.safetyStock")
                         .value(20));
 
+        ArgumentCaptor<CreateHubInventoryCommand> captor =
+                ArgumentCaptor.forClass(CreateHubInventoryCommand.class);
+
         verify(createHubInventoryUseCase)
-                .create(any(CreateHubInventoryCommand.class));
+                .create(captor.capture());
+
+        CreateHubInventoryCommand command = captor.getValue();
+
+        assertThat(command.getHubId()).isEqualTo(hubId);
+        assertThat(command.getProductId()).isEqualTo(productId);
+        assertThat(command.getQuantity()).isEqualTo(100);
+        assertThat(command.getRequesterId()).isEqualTo(requesterId);
+        assertThat(command.getRequesterRole()).isEqualTo(UserRole.MASTER);
     }
 
     @Test
     @DisplayName("허브 재고 등록 시 수량이 음수이면 400을 반환한다")
     void createHubInventory_fail_negativeQuantity() throws Exception {
+        // given
+        UUID requesterId = UUID.randomUUID();
         UUID hubId = UUID.randomUUID();
         UUID productId = UUID.randomUUID();
 
@@ -118,8 +145,11 @@ class HubInventoryCommandControllerTest {
                 }
                 """.formatted(hubId, productId);
 
+        // when & then
         mockMvc.perform(
                         post("/api/v1/hub-inventories")
+                                .header("X-User-Id", requesterId.toString())
+                                .header("X-User-Role", "MASTER")
                                 .contentType(MediaType.APPLICATION_JSON)
                                 .content(request)
                 )
@@ -132,6 +162,7 @@ class HubInventoryCommandControllerTest {
     @DisplayName("허브 재고 수량 수정 성공")
     void updateHubInventory_success() throws Exception {
         // given
+        UUID requesterId = UUID.randomUUID();
         UUID inventoryId = UUID.randomUUID();
         UUID hubId = UUID.randomUUID();
         UUID productId = UUID.randomUUID();
@@ -151,13 +182,18 @@ class HubInventoryCommandControllerTest {
 
         // when & then
         mockMvc.perform(
-                        patch("/api/v1/hub-inventories/{inventoryId}", inventoryId)
+                        patch(
+                                "/api/v1/hub-inventories/{inventoryId}",
+                                inventoryId
+                        )
+                                .header("X-User-Id", requesterId.toString())
+                                .header("X-User-Role", "MASTER")
                                 .contentType(MediaType.APPLICATION_JSON)
                                 .content("""
-                                    {
-                                      "quantity": 10
-                                    }
-                                    """)
+                                        {
+                                          "quantity": 10
+                                        }
+                                        """)
                 )
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.data.id")
@@ -171,29 +207,53 @@ class HubInventoryCommandControllerTest {
                 .andExpect(jsonPath("$.data.safetyStock")
                         .value(20));
 
+        ArgumentCaptor<UpdateHubInventoryCommand> captor =
+                ArgumentCaptor.forClass(UpdateHubInventoryCommand.class);
+
         verify(updateHubInventoryUseCase)
-                .update(any(UpdateHubInventoryCommand.class));
+                .update(captor.capture());
+
+        UpdateHubInventoryCommand command = captor.getValue();
+
+        assertThat(command.getId()).isEqualTo(inventoryId);
+        assertThat(command.getQuantity()).isEqualTo(10);
+        assertThat(command.getRequesterId()).isEqualTo(requesterId);
+        assertThat(command.getRequesterRole()).isEqualTo(UserRole.MASTER);
     }
 
     @Test
     @DisplayName("허브 재고 수량이 음수이면 INVALID_REQUEST를 반환한다")
     void updateHubInventory_fail_negativeQuantity() throws Exception {
+        // given
+        UUID requesterId = UUID.randomUUID();
         UUID inventoryId = UUID.randomUUID();
 
+        // when & then
         mockMvc.perform(
-                        patch("/api/v1/hub-inventories/{inventoryId}", inventoryId)
+                        patch(
+                                "/api/v1/hub-inventories/{inventoryId}",
+                                inventoryId
+                        )
+                                .header("X-User-Id", requesterId.toString())
+                                .header("X-User-Role", "MASTER")
                                 .contentType(MediaType.APPLICATION_JSON)
                                 .content("""
-                                    {
-                                      "quantity": -1
-                                    }
-                                    """)
+                                        {
+                                          "quantity": -1
+                                        }
+                                        """)
                 )
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.errorCode")
-                        .value(ErrorResponseCode.INVALID_REQUEST.getErrorCode()))
+                        .value(
+                                ErrorResponseCode.INVALID_REQUEST
+                                        .getErrorCode()
+                        ))
                 .andExpect(jsonPath("$.message")
-                        .value(ErrorResponseCode.INVALID_REQUEST.getMessage()));
+                        .value(
+                                ErrorResponseCode.INVALID_REQUEST
+                                        .getMessage()
+                        ));
 
         verifyNoInteractions(updateHubInventoryUseCase);
     }
@@ -202,9 +262,8 @@ class HubInventoryCommandControllerTest {
     @DisplayName("안전 재고 설정 성공")
     void updateSafetyStock_success() throws Exception {
         // given
+        UUID requesterId = UUID.randomUUID();
         UUID inventoryId = UUID.randomUUID();
-        UUID hubId = UUID.randomUUID();
-        UUID productId = UUID.randomUUID();
 
         UpdateSafetyStockResponse response =
                 UpdateSafetyStockResponse.builder()
@@ -222,19 +281,61 @@ class HubInventoryCommandControllerTest {
                                 "/api/v1/hub-inventories/{inventoryId}/safety-stock",
                                 inventoryId
                         )
+                                .header("X-User-Id", requesterId.toString())
+                                .header("X-User-Role", "MASTER")
                                 .contentType(MediaType.APPLICATION_JSON)
                                 .content("""
-                                    {
-                                      "safetyStock": 25
-                                    }
-                                    """)
+                                        {
+                                          "safetyStock": 25
+                                        }
+                                        """)
                 )
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.data.inventoryId")
                         .value(inventoryId.toString()))
-                .andExpect(jsonPath("$.data.safetyStock").value(25));
+                .andExpect(jsonPath("$.data.safetyStock")
+                        .value(25));
+
+        ArgumentCaptor<UpdateSafetyStockCommand> captor =
+                ArgumentCaptor.forClass(UpdateSafetyStockCommand.class);
 
         verify(updateSafetyStockUseCase)
-                .updateSafetyStock(any(UpdateSafetyStockCommand.class));
+                .updateSafetyStock(captor.capture());
+
+        UpdateSafetyStockCommand command = captor.getValue();
+
+        assertThat(command.getInventoryId()).isEqualTo(inventoryId);
+        assertThat(command.getSafetyStock()).isEqualTo(25);
+        assertThat(command.getRequesterId()).isEqualTo(requesterId);
+        assertThat(command.getRequesterRole()).isEqualTo(UserRole.MASTER);
+    }
+
+    @Test
+    @DisplayName("허브 재고 등록은 허용되지 않은 권한이면 403을 반환한다")
+    void createHubInventory_fail_forbidden() throws Exception {
+        // given
+        UUID requesterId = UUID.randomUUID();
+        UUID hubId = UUID.randomUUID();
+        UUID productId = UUID.randomUUID();
+
+        String request = """
+                {
+                  "hubId": "%s",
+                  "productId": "%s",
+                  "quantity": 100
+                }
+                """.formatted(hubId, productId);
+
+        // when & then
+        mockMvc.perform(
+                        post("/api/v1/hub-inventories")
+                                .header("X-User-Id", requesterId.toString())
+                                .header("X-User-Role", "DELIVERY_MANAGER")
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content(request)
+                )
+                .andExpect(status().isForbidden());
+
+        verifyNoInteractions(createHubInventoryUseCase);
     }
 }

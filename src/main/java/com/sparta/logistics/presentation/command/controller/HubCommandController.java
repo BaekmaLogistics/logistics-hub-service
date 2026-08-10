@@ -16,13 +16,15 @@ import com.sparta.logistics.presentation.common.dto.response.GeneralResponse;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.UUID;
 
 @RestController
 @RequiredArgsConstructor
-@RequestMapping("/api/v1")
+@RequestMapping("/api/v1/hubs")
 public class HubCommandController {
 
     private final CreateHubUseCase createHubUseCase;
@@ -30,7 +32,8 @@ public class HubCommandController {
     private final DeleteHubUseCase deleteHubUseCase;
     private final AssignHubManagerUseCase assignHubManagerUseCase;
 
-    @PostMapping("/hubs")
+    @PostMapping
+    @PreAuthorize("hasRole('MASTER')")
     public ResponseEntity<GeneralResponse<CreateHubResponse>> createHub(
             @Valid @RequestBody CreateHubRequest request
             ) {
@@ -42,7 +45,8 @@ public class HubCommandController {
         );
     }
 
-    @PatchMapping("/hubs/{hubId}")
+    @PatchMapping("/{hubId}")
+    @PreAuthorize("hasRole('MASTER')")
     public ResponseEntity<GeneralResponse<UpdateHubResponse>> updateHub(
             @PathVariable UUID hubId,
             @Valid @RequestBody UpdateHubRequest request
@@ -55,13 +59,17 @@ public class HubCommandController {
         );
     }
 
-    @DeleteMapping("/hubs/{hubId}")
+    @DeleteMapping("/{hubId}")
+    @PreAuthorize("hasRole('MASTER')")
     public ResponseEntity<GeneralResponse<Void>> deleteHub(
-            @PathVariable UUID hubId
+            @PathVariable UUID hubId,
+            Authentication authentication
     ) {
+        UUID userId = (UUID) authentication.getPrincipal();
+
         DeleteHubCommand command = DeleteHubCommand.builder()
                 .id(hubId)
-                .deletedBy(UUID.randomUUID()) // TODO: JWT 연동 후 로그인 사용자 ID로 변경
+                .deletedBy(userId)
                 .build();
 
         deleteHubUseCase.deleteHub(command);
@@ -72,7 +80,8 @@ public class HubCommandController {
         );
     }
 
-    @PatchMapping("/hubs/{hubId}/manager")
+    @PatchMapping("/{hubId}/manager")
+    @PreAuthorize("hasRole('MASTER')")
     public ResponseEntity<GeneralResponse<AssignHubManagerResponse>> assignManager(
             @PathVariable UUID hubId,
             @Valid @RequestBody AssignHubManagerRequest request
