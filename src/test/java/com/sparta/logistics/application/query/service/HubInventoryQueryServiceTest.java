@@ -412,4 +412,36 @@ class HubInventoryQueryServiceTest {
 
         return hub;
     }
+
+    @Test
+    @DisplayName("MASTER와 HUB_MANAGER가 아닌 사용자는 허브 재고 목록을 조회할 수 없다")
+    void searchHubInventories_fail_accessDenied() {
+        // given
+        UUID requesterId = UUID.randomUUID();
+
+        HubInventorySearchCondition condition =
+                HubInventorySearchCondition.builder()
+                        .hubId(UUID.randomUUID())
+                        .productId(UUID.randomUUID())
+                        .build();
+
+        Pageable pageable = PageRequest.of(0, 10);
+
+        // when & then
+        assertThatThrownBy(() ->
+                hubInventoryQueryService.searchHubInventories(
+                        condition,
+                        pageable,
+                        requesterId,
+                        UserRole.DELIVERY_MANAGER
+                )
+        )
+                .isInstanceOf(ApiException.class)
+                .hasMessage(
+                        ErrorResponseCode.HUB_ACCESS_DENIED.getMessage()
+                );
+
+        verifyNoInteractions(hubInventoryRepository);
+        verifyNoInteractions(hubRepository);
+    }
 }

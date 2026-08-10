@@ -67,7 +67,10 @@ public class HubInventoryQueryService implements HubInventoryQueryUseCase {
             }
 
             hubId = managedHub.getId();
+        } else if(requesterRole != UserRole.MASTER){
+            throw new ApiException(ErrorResponseCode.HUB_ACCESS_DENIED);
         }
+
         Page<HubInventory> hubInventories = hubInventoryRepository.search(hubId, condition.getProductId(), pageable);
         return hubInventories.map(HubInventoryResponse::from);
     }

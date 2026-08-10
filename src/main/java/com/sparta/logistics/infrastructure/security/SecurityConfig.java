@@ -1,6 +1,7 @@
 package com.sparta.logistics.infrastructure.security;
 
 import lombok.RequiredArgsConstructor;
+import org.springframework.boot.web.servlet.FilterRegistrationBean;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
@@ -17,6 +18,19 @@ public class SecurityConfig {
     private final GatewayHeaderAuthenticationFilter gatewayHeaderAuthenticationFilter;
     private final CustomAuthenticationEntryPoint customAuthenticationEntryPoint;
     private final CustomAccessDeniedHandler customAccessDeniedHandler;
+
+    @Bean
+    public FilterRegistrationBean<GatewayHeaderAuthenticationFilter>
+    gatewayHeaderAuthenticationFilterRegistration(
+            GatewayHeaderAuthenticationFilter filter
+    ) {
+        FilterRegistrationBean<GatewayHeaderAuthenticationFilter> registration =
+                new FilterRegistrationBean<>(filter);
+
+        registration.setEnabled(false);
+
+        return registration;
+    }
 
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception{

@@ -21,7 +21,7 @@ public class HubAccessValidator {
             return;
         }
 
-        if(role == UserRole.HUB_MANAGER && Objects.equals(hub.getManagerId(), userId)){
+        if(role == UserRole.HUB_MANAGER && userId != null && hub.getManagerId() != null && Objects.equals(hub.getManagerId(), userId)){
             return;
         }
 
