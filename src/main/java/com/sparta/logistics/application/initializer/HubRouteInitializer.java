@@ -6,6 +6,7 @@ import com.sparta.logistics.application.common.service.DirectionService;
 import com.sparta.logistics.application.graph.HubGraphManager;
 import com.sparta.logistics.application.initializer.seed.HubConnectionSeed;
 import com.sparta.logistics.application.initializer.seed.HubConnectionSeeds;
+import com.sparta.logistics.application.port.GraphVersionStore;
 import com.sparta.logistics.common.code.ErrorResponseCode;
 import com.sparta.logistics.common.exception.ApiException;
 import com.sparta.logistics.domain.entity.Hub;
@@ -37,6 +38,7 @@ public class HubRouteInitializer implements ApplicationRunner {
     private final HubRouteRepository hubRouteRepository;
     private final DirectionService directionService;
     private final HubGraphManager hubGraphManager;
+    private final GraphVersionStore graphVersionStore;
 
     private void createRoute(Hub fromHub, Hub toHub){
 
@@ -100,6 +102,8 @@ public class HubRouteInitializer implements ApplicationRunner {
 
         }
 
-        hubGraphManager.reloadGraph();
+        long currentVersion = graphVersionStore.getCurrentVersion();
+
+        hubGraphManager.reloadGraph(currentVersion);
     }
 }

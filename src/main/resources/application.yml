@@ -49,6 +49,10 @@ message:
     inventory-low: hub.inventory.low
     hub-deleted: hub.deleted
 
+hub:
+  graph:
+    syn-interval-ms: 10000
+
 management:
   tracing:
     enabled: true
