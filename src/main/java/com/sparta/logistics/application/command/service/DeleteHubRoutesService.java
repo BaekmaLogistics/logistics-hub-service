@@ -2,12 +2,16 @@
 package com.sparta.logistics.application.command.service;
 
 import com.sparta.logistics.application.command.usecase.DeleteHubRoutesUseCase;
+import com.sparta.logistics.application.event.HubRouteChangeType;
+import com.sparta.logistics.application.event.HubRouteChangedIntegrationEvent;
 import com.sparta.logistics.domain.entity.Hub;
 import com.sparta.logistics.domain.entity.HubRoute;
 import com.sparta.logistics.domain.repository.HubRouteRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 
+import java.time.Instant;
 import java.util.List;
 import java.util.UUID;
 
@@ -16,6 +20,7 @@ import java.util.UUID;
 public class DeleteHubRoutesService implements DeleteHubRoutesUseCase {
 
     private final HubRouteRepository hubRouteRepository;
+    private final ApplicationEventPublisher eventPublisher;
 
     @Override
     public void deleteRoutesByHub(
@@ -24,8 +29,16 @@ public class DeleteHubRoutesService implements DeleteHubRoutesUseCase {
     ) {
         List<HubRoute> routes = hubRouteRepository.findAllActiveRoutesByHub(hub);
 
-        routes.forEach(
-                route -> route.softDelete(deletedBy)
-        );
+        routes.forEach(route -> {
+            route.softDelete(deletedBy);
+
+            eventPublisher.publishEvent(
+                    new HubRouteChangedIntegrationEvent(
+                            route.getId(),
+                            HubRouteChangeType.DELETED,
+                            Instant.now()
+                    )
+            );
+        });
     }
 }

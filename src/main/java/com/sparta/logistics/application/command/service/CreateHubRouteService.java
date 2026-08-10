@@ -4,7 +4,9 @@ import com.sparta.logistics.application.command.dto.hubroute.CreateHubRouteComma
 import com.sparta.logistics.application.command.dto.hubroute.CreateHubRouteResponse;
 import com.sparta.logistics.application.command.usecase.CreateHubRouteUseCase;
 import com.sparta.logistics.application.common.service.DirectionService;
+import com.sparta.logistics.application.event.HubRouteChangeType;
 import com.sparta.logistics.application.event.HubRouteChangedEvent;
+import com.sparta.logistics.application.event.HubRouteChangedIntegrationEvent;
 import com.sparta.logistics.application.graph.HubGraphManager;
 import com.sparta.logistics.common.code.ErrorResponseCode;
 import com.sparta.logistics.common.exception.ApiException;
@@ -19,6 +21,7 @@ import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.Instant;
 import java.util.UUID;
 
 @Service
@@ -38,8 +41,14 @@ public class CreateHubRouteService implements CreateHubRouteUseCase {
     }
 
     private Hub findHub(UUID hubId){
-        return hubRepository.findById(hubId)
+        Hub hub = hubRepository.findById(hubId)
                 .orElseThrow(() -> new ApiException(ErrorResponseCode.HUB_NOT_FOUND));
+
+        if (hub.isDeleted()) {
+            throw new ApiException(ErrorResponseCode.HUB_ALREADY_DELETED);
+        }
+
+        return hub;
     }
 
     @Transactional
@@ -66,7 +75,17 @@ public class CreateHubRouteService implements CreateHubRouteUseCase {
         try{
             HubRoute savedHubRoute = hubRouteRepository.saveAndFlush(hubRoute);
 
+            //현재 인스턴스 갱신
             eventPublisher.publishEvent(new HubRouteChangedEvent());
+
+            //다른 Hub 인스턴스 동기화를 위한 이벤트 발행
+            eventPublisher.publishEvent(
+                    new HubRouteChangedIntegrationEvent(
+                            savedHubRoute.getId(),
+                            HubRouteChangeType.CREATED,
+                            Instant.now()
+                    )
+            );
 
             return CreateHubRouteResponse.builder()
                     .hubRouteId(savedHubRoute.getId())

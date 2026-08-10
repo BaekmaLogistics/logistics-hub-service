@@ -3,6 +3,7 @@ package com.sparta.logistics.application.command.service;
 import com.sparta.logistics.application.command.dto.hubinventory.CreateHubInventoryCommand;
 import com.sparta.logistics.application.command.dto.hubinventory.CreateHubInventoryResponse;
 import com.sparta.logistics.application.command.usecase.CreateHubInventoryUseCase;
+import com.sparta.logistics.application.event.InventoryLowEvent;
 import com.sparta.logistics.common.code.ErrorResponseCode;
 import com.sparta.logistics.common.exception.ApiException;
 import com.sparta.logistics.domain.entity.Hub;
@@ -10,8 +11,11 @@ import com.sparta.logistics.domain.entity.HubInventory;
 import com.sparta.logistics.domain.repository.HubInventoryRepository;
 import com.sparta.logistics.domain.repository.HubRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
+import java.time.Instant;
 
 @Service
 @RequiredArgsConstructor
@@ -19,6 +23,7 @@ public class CreateHubInventoryService implements CreateHubInventoryUseCase {
 
     private final HubInventoryRepository hubInventoryRepository;
     private final HubRepository hubRepository;
+    private final ApplicationEventPublisher eventPublisher;
 
     @Override
     @Transactional
@@ -48,9 +53,18 @@ public class CreateHubInventoryService implements CreateHubInventoryUseCase {
 
         HubInventory savedInventory = hubInventoryRepository.save(inventory);
 
-        // TODO: RabbitMQ 연동 시 생성된 재고가 안전재고 이하인 경우
-        //       InventoryLowEvent 발행
-
+        if(savedInventory.isLowStock()){
+            eventPublisher.publishEvent(
+                    new InventoryLowEvent(
+                            savedInventory.getId(),
+                            savedInventory.getHub().getId(),
+                            savedInventory.getProductId(),
+                            savedInventory.getQuantity(),
+                            savedInventory.getSafetyStock(),
+                            Instant.now()
+                    )
+            );
+        }
 
         return CreateHubInventoryResponse.from(savedInventory);
     }

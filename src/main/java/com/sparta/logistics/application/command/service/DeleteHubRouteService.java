@@ -2,7 +2,9 @@ package com.sparta.logistics.application.command.service;
 
 import com.sparta.logistics.application.command.dto.hubroute.DeleteHubRouteCommand;
 import com.sparta.logistics.application.command.usecase.DeleteHubRouteUseCase;
+import com.sparta.logistics.application.event.HubRouteChangeType;
 import com.sparta.logistics.application.event.HubRouteChangedEvent;
+import com.sparta.logistics.application.event.HubRouteChangedIntegrationEvent;
 import com.sparta.logistics.common.code.ErrorResponseCode;
 import com.sparta.logistics.common.exception.ApiException;
 import com.sparta.logistics.domain.entity.HubRoute;
@@ -11,6 +13,8 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
+import java.time.Instant;
 
 @Service
 @RequiredArgsConstructor
@@ -31,8 +35,18 @@ public class DeleteHubRouteService implements DeleteHubRouteUseCase {
 
         hubRoute.softDelete(command.getDeletedBy());
 
+        //현재 인스턴스 갱신
         eventPublisher.publishEvent(
                 new HubRouteChangedEvent()
+        );
+
+        //동기화
+        eventPublisher.publishEvent(
+                new HubRouteChangedIntegrationEvent(
+                        hubRoute.getId(),
+                        HubRouteChangeType.DELETED,
+                        Instant.now()
+                )
         );
     }
 }

@@ -1,6 +1,7 @@
 package com.sparta.logistics.application.command.service;
 
 import com.sparta.logistics.application.command.usecase.DecreaseHubInventoryUseCase;
+import com.sparta.logistics.application.event.InventoryLowEvent;
 import com.sparta.logistics.common.code.ErrorResponseCode;
 import com.sparta.logistics.common.exception.ApiException;
 import com.sparta.logistics.domain.entity.HubInventory;
@@ -8,9 +9,11 @@ import com.sparta.logistics.domain.entity.HubInventoryOperation;
 import com.sparta.logistics.domain.repository.HubInventoryOperationRepository;
 import com.sparta.logistics.domain.repository.HubInventoryRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.Instant;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -20,6 +23,7 @@ public class DecreaseHubInventoryService{
 
     private final HubInventoryRepository hubInventoryRepository;
     private final HubInventoryOperationRepository hubInventoryOperationRepository;
+    private final ApplicationEventPublisher eventPublisher;
 
     @Transactional
     public void decrease(UUID orderId, UUID hubId, UUID productId, int quantity){
@@ -40,7 +44,11 @@ public class DecreaseHubInventoryService{
             return;
         }
 
+        boolean wasLowStock = inventory.isLowStock();
+
         inventory.decreaseQuantity(quantity);
+
+        boolean becameLowStock = !wasLowStock && inventory.isLowStock();
 
         HubInventoryOperation operation = HubInventoryOperation.builder()
                 .orderId(orderId)
@@ -50,5 +58,18 @@ public class DecreaseHubInventoryService{
                 .build();
 
         hubInventoryOperationRepository.save(operation);
+
+        if(becameLowStock){
+            eventPublisher.publishEvent(
+                    new InventoryLowEvent(
+                            inventory.getId(),
+                            inventory.getHub().getId(),
+                            inventory.getProductId(),
+                            inventory.getQuantity(),
+                            inventory.getSafetyStock(),
+                            Instant.now()
+                    )
+            );
+        }
     }
 }
