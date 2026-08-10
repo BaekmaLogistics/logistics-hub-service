@@ -43,6 +43,11 @@ message:
     delivery: delivery.queue
     hub: hub.queue
     notification: notification.queue
+    hub-route-changed: hub.route.changed.queue
+  routing-key:
+    hub-route-changed: hub.route.changed
+    inventory-low: hub.inventory.low
+    hub-deleted: hub.deleted
 
 management:
   tracing:

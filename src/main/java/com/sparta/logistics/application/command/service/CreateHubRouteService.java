@@ -81,7 +81,6 @@ public class CreateHubRouteService implements CreateHubRouteUseCase {
             //다른 Hub 인스턴스 동기화를 위한 이벤트 발행
             eventPublisher.publishEvent(
                     new HubRouteChangedIntegrationEvent(
-                            null, //TODO Security 적용 후 actorId 전달
                             savedHubRoute.getId(),
                             HubRouteChangeType.CREATED,
                             Instant.now()
