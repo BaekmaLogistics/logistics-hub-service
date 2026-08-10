@@ -23,7 +23,7 @@ public class HubInitializer implements ApplicationRunner {
 
     private void validateHubSeedConsistency(){
         for(HubSeed hubSeed : HubSeed.values()){
-            Hub hub = hubRepository.findByName(hubSeed.getName())
+            Hub hub = hubRepository.findByNameAndDeletedAtIsNull(hubSeed.getName())
                     .orElseThrow(() ->
                             new IllegalStateException(
                                     "필수 허브가 누락되었습니다. name=" + hubSeed.getName()

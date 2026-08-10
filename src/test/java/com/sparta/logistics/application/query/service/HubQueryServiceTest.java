@@ -50,7 +50,7 @@ class HubQueryServiceTest {
                 127.1059
         );
 
-        when(hubRepository.findById(hubId))
+        when(hubRepository.findByIdAndDeletedAtIsNull(hubId))
                 .thenReturn(Optional.of(hub));
 
         HubDetailResponse response = hubQueryService.getHub(hubId);
@@ -60,7 +60,7 @@ class HubQueryServiceTest {
         assertThat(response.getLatitude()).isEqualTo(37.5145);
         assertThat(response.getLongitude()).isEqualTo(127.1059);
 
-        verify(hubRepository).findById(hubId);
+        verify(hubRepository).findByIdAndDeletedAtIsNull(hubId);
     }
 
     @Test
@@ -68,14 +68,14 @@ class HubQueryServiceTest {
     void get_hub_fail() {
         UUID hubId = UUID.randomUUID();
 
-        when(hubRepository.findById(hubId))
+        when(hubRepository.findByIdAndDeletedAtIsNull(hubId))
                 .thenReturn(Optional.empty());
 
         assertThatThrownBy(() -> hubQueryService.getHub(hubId))
                 .isInstanceOf(ApiException.class)
                 .hasMessage(ErrorResponseCode.HUB_NOT_FOUND.getMessage());
 
-        verify(hubRepository).findById(hubId);
+        verify(hubRepository).findByIdAndDeletedAtIsNull(hubId);
     }
 
     @Test

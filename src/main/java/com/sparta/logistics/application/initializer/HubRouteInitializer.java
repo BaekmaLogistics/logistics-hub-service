@@ -72,7 +72,7 @@ public class HubRouteInitializer implements ApplicationRunner {
     @Override
     public void run(ApplicationArguments args){
 
-        Map<String, Hub> hubMap = hubRepository.findAll()
+        Map<String, Hub> hubMap = hubRepository.findAllByDeletedAtIsNull()
                 .stream()
                 .collect(Collectors.toMap(
                         Hub::getName,

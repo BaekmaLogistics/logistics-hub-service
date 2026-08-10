@@ -11,7 +11,9 @@ public interface HubRepository extends JpaRepository<Hub, UUID>, HubRepositoryCu
 
     boolean existsByNameAndDeletedAtIsNull(String name);
 
-    Optional<Hub> findByName(String name);
+    Optional<Hub> findByNameAndDeletedAtIsNull(String name);
 
     List<Hub> findAllByDeletedAtIsNull();
+
+    Optional<Hub> findByIdAndDeletedAtIsNull(UUID id);
 }
