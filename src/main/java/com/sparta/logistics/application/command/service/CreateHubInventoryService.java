@@ -31,7 +31,7 @@ public class CreateHubInventoryService implements CreateHubInventoryUseCase {
     @Override
     public CreateHubInventoryResponse create(CreateHubInventoryCommand command){
 
-        if(command.getQuantity() < 0){
+        if(command.getQuantity() == null || command.getQuantity() < 0){
             throw new ApiException(ErrorResponseCode.INVALID_STOCK_QUANTITY);
         }
         //허브 존재 확인
