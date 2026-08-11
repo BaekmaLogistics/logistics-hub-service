@@ -79,6 +79,12 @@ springdoc:
   override-with-generic-response: false
   use-fqn: true
 
+naver:
+  maps:
+    client-id: ${NAVER_MAP_CLIENT_ID}
+    client-secret: ${NAVER_MAP_CLIENT_SECRET}
+    url: ${NAVER_MAP_URL}
+
 logging:
   level:
     org.hibernate.SQL: debug

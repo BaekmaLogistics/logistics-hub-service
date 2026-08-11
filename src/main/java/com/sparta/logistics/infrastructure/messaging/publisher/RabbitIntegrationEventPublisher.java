@@ -20,13 +20,13 @@ public class RabbitIntegrationEventPublisher implements IntegrationEventPublishe
     @Value("${message.exchange}")
     private String exchange;
 
-    @Value(("${message.routing-key.hub-route-changed}"))
+    @Value("${message.binding-key.hub.route-changed}")
     private String hubRouteChangedRoutingKey;
 
-    @Value("${message.routing-key.inventory-low}")
+    @Value("${message.binding-key.notification.inventory-low}")
     private String inventoryLowRoutingKey;
 
-    @Value("${message.routing-key.hub-deleted}")
+    @Value("${message.binding-key.company.hub-deleted}")
     private String hubDeletedRoutingKey;
 
     private final RabbitTemplate rabbitTemplate;
