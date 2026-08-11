@@ -1,6 +1,9 @@
+server:
+  port: ${SERVER_PORT:8082}
+
 spring:
   application:
-    name: logistics
+    name: hub-service
   #  profiles:
   #    active: dev
   datasource:
@@ -84,6 +87,10 @@ naver:
     client-id: ${NAVER_MAP_CLIENT_ID}
     client-secret: ${NAVER_MAP_CLIENT_SECRET}
     url: ${NAVER_MAP_URL}
+
+service:
+  product:
+    url: ${PRODUCT_SERVICE_URL:http://localhost:8085}
 
 logging:
   level:
