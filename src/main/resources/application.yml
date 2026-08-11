@@ -43,6 +43,17 @@ message:
     delivery: delivery.queue
     hub: hub.queue
     notification: notification.queue
+    company: company.queue
+  binding-key:
+    notification:
+      inventory-low: hub.inventory.low
+      order-created: order.created
+      order-canceled: order.canceled
+      order-completed: order.completed
+    hub:
+      route-changed: hub.route.changed
+    company:
+      hub-deleted: hub.deleted
 
 management:
   tracing:
