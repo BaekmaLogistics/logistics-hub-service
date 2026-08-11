@@ -43,11 +43,17 @@ message:
     delivery: delivery.queue
     hub: hub.queue
     notification: notification.queue
-    hub-route-changed: hub.route.changed.queue
-  routing-key:
-    hub-route-changed: hub.route.changed
-    inventory-low: hub.inventory.low
-    hub-deleted: hub.deleted
+    company: company.queue
+  binding-key:
+    notification:
+      inventory-low: hub.inventory.low
+      order-created: order.created
+      order-canceled: order.canceled
+      order-completed: order.completed
+    hub:
+      route-changed: hub.route.changed
+    company:
+      hub-deleted: hub.deleted
 
 hub:
   graph:
@@ -72,12 +78,6 @@ springdoc:
     enabled: true
   override-with-generic-response: false
   use-fqn: true
-
-naver:
-  maps:
-    client-id: ${NAVER_MAP_CLIENT_ID}
-    client-secret: ${NAVER_MAP_CLIENT_SECRET}
-    url: ${NAVER_MAP_URL}
 
 logging:
   level:
