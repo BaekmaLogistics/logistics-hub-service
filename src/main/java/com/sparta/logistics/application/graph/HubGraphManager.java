@@ -32,43 +32,6 @@ public class HubGraphManager {
         return hubGraph;
     }
 
-    public synchronized void reloadGraph(){
-        List<Hub> hubs = hubRepository.findAllByDeletedAtIsNull();
-        List<HubRoute> routes = hubRouteRepository.findAllByDeletedAtIsNull();
-        Map<UUID, HubNode> nodes = new HashMap<>();
-
-        for(Hub hub : hubs){
-            nodes.put(
-                    hub.getId(),
-                    new HubNode(
-                            hub.getId(),
-                            hub.getLatitude(),
-                            hub.getLongitude()
-                    )
-            );
-        }
-
-        for(HubRoute route : routes){
-            HubNode fromNode = nodes.get(route.getFromHub().getId());
-            HubNode toNode = nodes.get(route.getToHub().getId());
-
-            if (fromNode == null || toNode == null) {
-                log.warn("활성 허브를 찾을 수 없습니다. fromHubId={}", route.getFromHub().getId());
-                continue;
-            }
-
-            fromNode.addEdge(
-                    new Edge(
-                            route.getToHub().getId(),
-                            route.getDistance(),
-                            route.getDuration()
-                    )
-            );
-        }
-
-        hubGraph = new HubGraph(nodes);
-    }
-
     public synchronized void reloadGraph(long version){
         log.info("현재 버전={}", localGraphVersion);
 

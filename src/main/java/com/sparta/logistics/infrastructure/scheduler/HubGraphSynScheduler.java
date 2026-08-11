@@ -2,7 +2,6 @@ package com.sparta.logistics.infrastructure.scheduler;
 
 import com.sparta.logistics.application.graph.HubGraphManager;
 import com.sparta.logistics.application.port.GraphVersionStore;
-import com.sparta.logistics.application.port.ShortestPathCache;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.scheduling.annotation.Scheduled;
@@ -15,7 +14,6 @@ public class HubGraphSynScheduler {
 
     private final GraphVersionStore graphVersionStore;
     private final HubGraphManager hubGraphManager;
-    private final ShortestPathCache shortestPathCache;
 
     @Scheduled(fixedDelayString = "${hub.graph.sync-interval-ms:60000}")
     public void synchronize(){
@@ -33,7 +31,6 @@ public class HubGraphSynScheduler {
         );
 
         hubGraphManager.reloadGraph(sharedVersion);
-        shortestPathCache.evictAll();
 
         log.info(
                 "허브 그래프 재동기화 완료. graphVersion={}",

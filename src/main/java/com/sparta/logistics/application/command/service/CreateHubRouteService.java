@@ -6,8 +6,6 @@ import com.sparta.logistics.application.command.usecase.CreateHubRouteUseCase;
 import com.sparta.logistics.application.common.service.DirectionService;
 import com.sparta.logistics.application.event.HubRouteChangeType;
 import com.sparta.logistics.application.event.HubRouteChangedEvent;
-import com.sparta.logistics.application.event.HubRouteChangedIntegrationEvent;
-import com.sparta.logistics.application.graph.HubGraphManager;
 import com.sparta.logistics.common.code.ErrorResponseCode;
 import com.sparta.logistics.common.exception.ApiException;
 import com.sparta.logistics.domain.entity.Hub;
@@ -75,12 +73,8 @@ public class CreateHubRouteService implements CreateHubRouteUseCase {
         try{
             HubRoute savedHubRoute = hubRouteRepository.saveAndFlush(hubRoute);
 
-            //현재 인스턴스 갱신
-            eventPublisher.publishEvent(new HubRouteChangedEvent());
-
-            //다른 Hub 인스턴스 동기화를 위한 이벤트 발행
             eventPublisher.publishEvent(
-                    new HubRouteChangedIntegrationEvent(
+                    new HubRouteChangedEvent(
                             savedHubRoute.getId(),
                             HubRouteChangeType.CREATED,
                             Instant.now()

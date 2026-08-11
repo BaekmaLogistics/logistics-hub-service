@@ -16,8 +16,7 @@ import org.springframework.stereotype.Component;
 public class HubRouteChangedConsumer {
 
     private final HubGraphManager hubGraphManager;
-    private final ShortestPathCache shortestPathCache;
-    private final GraphVersionStore graphVersionStore;
+
 
     @RabbitListener(queues = "${message.queue.hub-route-changed}")
     public void consume(EventEnvelope<HubRouteChangedIntegrationEvent> envelope){
@@ -25,10 +24,7 @@ public class HubRouteChangedConsumer {
         HubRouteChangedIntegrationEvent event = envelope.payload();
         log.info("허브 경로 변경 메시지 수신: {}", event);
 
-        long currentVersion = graphVersionStore.getCurrentVersion();
-
-        hubGraphManager.reloadGraph(currentVersion);
-        shortestPathCache.evictAll();
+        hubGraphManager.reloadGraph(event.graphVersion());
 
         log.info("허브 그래프 재적재 및 최단 경로 캐시 초기화 완료");
     }

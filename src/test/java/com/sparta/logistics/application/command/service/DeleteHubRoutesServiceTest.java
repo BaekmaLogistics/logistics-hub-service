@@ -1,6 +1,5 @@
 package com.sparta.logistics.application.command.service;
 
-import com.sparta.logistics.application.event.HubRouteChangedIntegrationEvent;
 import com.sparta.logistics.domain.entity.Hub;
 import com.sparta.logistics.domain.entity.HubRoute;
 import com.sparta.logistics.domain.repository.HubRouteRepository;
@@ -11,15 +10,12 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.context.ApplicationEventPublisher;
 
 import java.util.List;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.BDDMockito.given;
-import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 
 @Tag("unit")
@@ -29,14 +25,11 @@ class DeleteHubRoutesServiceTest {
     @Mock
     private HubRouteRepository hubRouteRepository;
 
-    @Mock
-    private ApplicationEventPublisher eventPublisher;
-
     @InjectMocks
     private DeleteHubRoutesService deleteHubRoutesService;
 
     @Test
-    @DisplayName("허브 삭제 시 해당 허브와 연결된 활성 경로들을 모두 soft delete하고 경로 삭제 이벤트를 발행한다")
+    @DisplayName("허브 삭제 시 해당 허브와 연결된 활성 경로들을 모두 soft delete한다")
     void deleteRoutesByHub_success() {
         // given
         UUID deletedBy = UUID.randomUUID();
@@ -96,13 +89,11 @@ class DeleteHubRoutesServiceTest {
 
         assertThat(seoulToDaejeon.getDeletedBy())
                 .isEqualTo(deletedBy);
+
         assertThat(incheonToSeoul.getDeletedBy())
                 .isEqualTo(deletedBy);
 
         verify(hubRouteRepository)
                 .findAllActiveRoutesByHub(seoulHub);
-
-        verify(eventPublisher, times(2))
-                .publishEvent(any(HubRouteChangedIntegrationEvent.class));
     }
 }

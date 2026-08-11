@@ -2,6 +2,7 @@ package com.sparta.logistics.application.command.service;
 
 import com.sparta.logistics.application.command.usecase.RefreshHubRouteUseCase;
 import com.sparta.logistics.application.common.service.DirectionService;
+import com.sparta.logistics.application.event.HubRouteChangeType;
 import com.sparta.logistics.application.event.HubRouteChangedEvent;
 import com.sparta.logistics.domain.entity.Hub;
 import com.sparta.logistics.domain.entity.HubRoute;
@@ -11,6 +12,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 
+import java.time.Instant;
 import java.util.List;
 
 @Service
@@ -35,11 +37,13 @@ public class RefreshHubRouteService implements RefreshHubRouteUseCase {
                     routeInfo.getDistance(),
                     routeInfo.getDuration()
             );
-        }
 
-        if(!routes.isEmpty()){
             applicationEventPublisher.publishEvent(
-                    new HubRouteChangedEvent()
+                    new HubRouteChangedEvent(
+                            route.getId(),
+                            HubRouteChangeType.UPDATED,
+                            Instant.now()
+                    )
             );
         }
     }

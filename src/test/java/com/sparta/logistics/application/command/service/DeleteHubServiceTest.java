@@ -1,12 +1,8 @@
 package com.sparta.logistics.application.command.service;
 
 import com.sparta.logistics.application.command.dto.hub.DeleteHubCommand;
-import com.sparta.logistics.application.command.dto.hub.UpdateHubCommand;
-import com.sparta.logistics.application.command.dto.hub.UpdateHubResponse;
 import com.sparta.logistics.application.command.usecase.DeleteHubRoutesUseCase;
-import com.sparta.logistics.application.common.dto.Coordinate;
-import com.sparta.logistics.application.common.service.GeocodingService;
-import com.sparta.logistics.application.event.HubRouteChangedEvent;
+import com.sparta.logistics.application.event.HubDeletedEvent;
 import com.sparta.logistics.common.code.ErrorResponseCode;
 import com.sparta.logistics.common.exception.ApiException;
 import com.sparta.logistics.domain.entity.Hub;
@@ -15,19 +11,17 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.context.ApplicationEventPublisher;
-import org.springframework.test.util.ReflectionTestUtils;
 
-import java.time.Instant;
 import java.util.Optional;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.verify;
@@ -50,8 +44,9 @@ class DeleteHubServiceTest {
     private DeleteHubService deleteHubService;
 
     @Test
-    @DisplayName("허브 삭제 시 연결된 활성 경로를 삭제하고 그래프 변경 이벤트를 발행한다")
+    @DisplayName("허브 삭제 시 연결된 활성 경로를 삭제하고 허브 삭제 이벤트를 발행한다")
     void deleteHub_success() {
+        // given
         UUID hubId = UUID.randomUUID();
         UUID deletedBy = UUID.randomUUID();
 
@@ -71,20 +66,32 @@ class DeleteHubServiceTest {
         given(hubRepository.findById(hubId))
                 .willReturn(Optional.of(hub));
 
+        // when
         deleteHubService.deleteHub(command);
 
+        // then
         assertThat(hub.isDeleted()).isTrue();
+        assertThat(hub.getDeletedBy()).isEqualTo(deletedBy);
 
         verify(deleteHubRoutesUseCase)
                 .deleteRoutesByHub(hub, deletedBy);
 
+        ArgumentCaptor<HubDeletedEvent> eventCaptor =
+                ArgumentCaptor.forClass(HubDeletedEvent.class);
+
         verify(eventPublisher)
-                .publishEvent(any(HubRouteChangedEvent.class));
+                .publishEvent(eventCaptor.capture());
+
+        HubDeletedEvent event = eventCaptor.getValue();
+
+        assertThat(event.hubId()).isEqualTo(hub.getId());
+        assertThat(event.deletedAt()).isEqualTo(hub.getDeletedAt());
     }
 
     @Test
-    @DisplayName("존재하지 않는 허브 삭제")
+    @DisplayName("존재하지 않는 허브는 삭제할 수 없다")
     void deleteHub_fail_notFound() {
+        // given
         DeleteHubCommand command = DeleteHubCommand.builder()
                 .id(UUID.randomUUID())
                 .deletedBy(UUID.randomUUID())
@@ -93,6 +100,7 @@ class DeleteHubServiceTest {
         given(hubRepository.findById(any()))
                 .willReturn(Optional.empty());
 
+        // when & then
         assertThatThrownBy(() -> deleteHubService.deleteHub(command))
                 .isInstanceOf(ApiException.class)
                 .hasMessage(ErrorResponseCode.HUB_NOT_FOUND.getMessage());
@@ -102,9 +110,8 @@ class DeleteHubServiceTest {
     }
 
     @Test
-    @DisplayName("이미 삭제된 허브 삭제")
+    @DisplayName("이미 삭제된 허브는 다시 삭제할 수 없다")
     void deleteHub_fail_alreadyDeleted() {
-
         // given
         UUID deletedBy = UUID.randomUUID();
 

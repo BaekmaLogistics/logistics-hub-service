@@ -28,10 +28,11 @@ public class RedisShortestPathCache implements ShortestPathCache {
 
     @Override
     public Optional<ShortestPath> get(
+            long graphVersion,
             UUID fromHubId,
             UUID toHubId
     ) {
-        String key = generateKey(fromHubId, toHubId);
+        String key = generateKey(graphVersion, fromHubId, toHubId);
 
         Object value = redisTemplate.opsForValue().get(key);
 
@@ -50,11 +51,12 @@ public class RedisShortestPathCache implements ShortestPathCache {
 
     @Override
     public void put(
+            long graphVersion,
             UUID fromHubId,
             UUID toHubId,
             ShortestPath shortestPath
     ){
-        String key = generateKey(fromHubId, toHubId);
+        String key = generateKey(graphVersion, fromHubId, toHubId);
 
         redisTemplate.opsForValue()
                 .set(key, shortestPath, TTL);
@@ -62,28 +64,7 @@ public class RedisShortestPathCache implements ShortestPathCache {
         log.info("PUT key={}", key);
     }
 
-    @Override
-    public void evictAll(){
-
-        // TODO: 그래프 버전 기반 캐시 정합성 보장
-        // - evictAll 실패 시 이전 그래프 기준 캐시가 조회될 수 있음
-        // - 이전 HubGraph로 계산 중인 요청이 evict 이후 stale cache를 다시 저장할 수 있음
-        // - HubGraph version을 캐시 key namespace에 포함하여 해결 예정
-        //   ex) shortest-route:{graphVersion}:{fromHubId}:{toHubId}
-
-        ScanOptions options = ScanOptions.scanOptions()
-                .match(KEY_PREFIX+"*")
-                .count(100)
-                .build();
-
-        try(Cursor<String> cursor = redisTemplate.scan(options)){
-            while(cursor.hasNext()){
-                redisTemplate.delete(cursor.next());
-            }
-        }
-    }
-
-    private String generateKey(UUID fromHubId, UUID toHubId){
-        return KEY_PREFIX + fromHubId + ":" + toHubId;
+    private String generateKey(long graphVersion, UUID fromHubId, UUID toHubId){
+        return KEY_PREFIX + graphVersion + ":" + fromHubId + ":" + toHubId;
     }
 }

@@ -26,8 +26,10 @@ public class FindShortestPathService implements FindShortestPathUseCase {
             UUID fromHubId,
             UUID toHubId
     ){
+        long graphVersion = hubGraphManager.getLocalGraphVersion();
+
         //HIT
-        Optional<ShortestPath> cached = shortestPathCache.get(fromHubId, toHubId);
+        Optional<ShortestPath> cached = shortestPathCache.get(graphVersion, fromHubId, toHubId);
 
         if(cached.isPresent()){
             return ShortestPathResponse.from(cached.get());
@@ -43,6 +45,7 @@ public class FindShortestPathService implements FindShortestPathUseCase {
 
         //캐시 적재
         shortestPathCache.put(
+                graphVersion,
                 fromHubId,
                 toHubId,
                 shortestPath
