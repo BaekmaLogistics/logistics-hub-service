@@ -51,7 +51,7 @@ message:
 
 hub:
   graph:
-    syn-interval-ms: 10000
+    sync-interval-ms: 10000
 
 management:
   tracing:

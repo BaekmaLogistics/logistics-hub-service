@@ -18,7 +18,7 @@ public class HubRouteChangedConsumer {
     private final HubGraphManager hubGraphManager;
 
 
-    @RabbitListener(queues = "${message.queue.hub-route-changed}")
+    @RabbitListener(queues = "${message.queue.hub}")
     public void consume(EventEnvelope<HubRouteChangedIntegrationEvent> envelope){
 
         HubRouteChangedIntegrationEvent event = envelope.payload();

@@ -1,12 +1,8 @@
 package com.sparta.logistics.application.initializer;
 
-import com.sparta.logistics.application.command.dto.hubroute.CreateHubRouteCommand;
-import com.sparta.logistics.application.command.usecase.CreateHubRouteUseCase;
 import com.sparta.logistics.application.common.service.DirectionService;
-import com.sparta.logistics.application.graph.HubGraphManager;
 import com.sparta.logistics.application.initializer.seed.HubConnectionSeed;
 import com.sparta.logistics.application.initializer.seed.HubConnectionSeeds;
-import com.sparta.logistics.application.port.GraphVersionStore;
 import com.sparta.logistics.common.code.ErrorResponseCode;
 import com.sparta.logistics.common.exception.ApiException;
 import com.sparta.logistics.domain.entity.Hub;
@@ -18,11 +14,8 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.ApplicationArguments;
 import org.springframework.boot.ApplicationRunner;
-import org.springframework.boot.context.event.ApplicationReadyEvent;
-import org.springframework.context.event.EventListener;
 import org.springframework.core.annotation.Order;
 import org.springframework.stereotype.Component;
-import org.springframework.transaction.annotation.Transactional;
 
 import java.util.Map;
 import java.util.function.Function;
@@ -37,8 +30,6 @@ public class HubRouteInitializer implements ApplicationRunner {
     private final HubRepository hubRepository;
     private final HubRouteRepository hubRouteRepository;
     private final DirectionService directionService;
-    private final HubGraphManager hubGraphManager;
-    private final GraphVersionStore graphVersionStore;
 
     private void createRoute(Hub fromHub, Hub toHub){
 
@@ -101,9 +92,5 @@ public class HubRouteInitializer implements ApplicationRunner {
             }
 
         }
-
-        long currentVersion = graphVersionStore.getCurrentVersion();
-
-        hubGraphManager.reloadGraph(currentVersion);
     }
 }
