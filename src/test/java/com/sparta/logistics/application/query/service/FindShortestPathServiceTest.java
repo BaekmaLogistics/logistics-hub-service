@@ -106,6 +106,9 @@ class FindShortestPathServiceTest {
         // given
         HubGraph hubGraph = mock(HubGraph.class);
 
+        when(hubGraphManager.getLocalGraphVersion())
+                .thenReturn(graphVersion);
+
         when(shortestPathCache.get(graphVersion, fromHubId, toHubId))
                 .thenReturn(Optional.empty());
 
