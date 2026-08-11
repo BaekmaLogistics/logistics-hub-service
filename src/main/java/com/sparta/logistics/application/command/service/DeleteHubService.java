@@ -4,7 +4,6 @@ import com.sparta.logistics.application.command.dto.hub.DeleteHubCommand;
 import com.sparta.logistics.application.command.usecase.DeleteHubRoutesUseCase;
 import com.sparta.logistics.application.command.usecase.DeleteHubUseCase;
 import com.sparta.logistics.application.event.HubDeletedEvent;
-import com.sparta.logistics.application.event.HubRouteChangedEvent;
 import com.sparta.logistics.common.code.ErrorResponseCode;
 import com.sparta.logistics.common.exception.ApiException;
 import com.sparta.logistics.domain.entity.Hub;
@@ -38,10 +37,6 @@ public class DeleteHubService implements DeleteHubUseCase {
         );
 
         hub.softDelete(command.getDeletedBy());
-
-        eventPublisher.publishEvent(
-                new HubRouteChangedEvent()
-        );
 
         eventPublisher.publishEvent(
                 new HubDeletedEvent(

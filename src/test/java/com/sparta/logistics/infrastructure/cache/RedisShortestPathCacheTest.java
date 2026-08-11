@@ -22,53 +22,55 @@ class RedisShortestPathCacheTest {
     private ShortestPathCache shortestPathCache;
 
     @Test
-    @DisplayName("최단 경로 캐시를 전체 삭제한다")
-    void evictAll() {
+    @DisplayName("그래프 버전이 변경되면 이전 버전의 최단 경로 캐시는 조회되지 않는다")
+    void cacheIsSeparatedByGraphVersion() {
+        // given
+        long oldVersion = 1L;
+        long newVersion = 2L;
+
         UUID hubA = UUID.randomUUID();
         UUID hubB = UUID.randomUUID();
-        UUID hubC = UUID.randomUUID();
 
-        PathSegment pathSegmentAB = new PathSegment(
+        PathSegment pathSegment = new PathSegment(
                 hubA,
                 hubB,
                 100.0,
                 60
         );
 
-        ShortestPath pathAB = new ShortestPath(
+        ShortestPath shortestPath = new ShortestPath(
                 List.of(hubA, hubB),
-                List.of(pathSegmentAB),
+                List.of(pathSegment),
                 100.0,
                 60
         );
 
-        PathSegment pathSegmentBC = new PathSegment(
+        // 이전 그래프 버전으로 캐시 저장
+        shortestPathCache.put(
+                oldVersion,
+                hubA,
                 hubB,
-                hubC,
-                150.0,
-                80
+                shortestPath
         );
 
-        ShortestPath pathBC = new ShortestPath(
-                List.of(hubB, hubC),
-                List.of(pathSegmentBC),
-                200.0,
-                120
-        );
+        // when & then
 
-        shortestPathCache.put(hubA, hubB, pathAB);
-        shortestPathCache.put(hubB, hubC, pathBC);
-
-        // when
-        shortestPathCache.evictAll();
-
-        // then
+        // 같은 버전에서는 HIT
         assertTrue(
-                shortestPathCache.get(hubA, hubB).isEmpty()
+                shortestPathCache.get(
+                        oldVersion,
+                        hubA,
+                        hubB
+                ).isPresent()
         );
 
+        // 새로운 그래프 버전에서는 MISS
         assertTrue(
-                shortestPathCache.get(hubB, hubC).isEmpty()
+                shortestPathCache.get(
+                        newVersion,
+                        hubA,
+                        hubB
+                ).isEmpty()
         );
     }
 }

@@ -6,7 +6,6 @@ import com.sparta.logistics.application.command.usecase.UpdateHubRouteUseCase;
 import com.sparta.logistics.application.common.service.DirectionService;
 import com.sparta.logistics.application.event.HubRouteChangeType;
 import com.sparta.logistics.application.event.HubRouteChangedEvent;
-import com.sparta.logistics.application.event.HubRouteChangedIntegrationEvent;
 import com.sparta.logistics.common.code.ErrorResponseCode;
 import com.sparta.logistics.common.exception.ApiException;
 import com.sparta.logistics.domain.entity.Hub;
@@ -93,14 +92,9 @@ public class UpdateHubRouteService implements UpdateHubRouteUseCase {
                 routeInfo.getDuration()
         );
 
-        //현재 인스턴스 갱신을 위한 이벤트
-        eventPublisher.publishEvent(
-                new HubRouteChangedEvent()
-        );
-
         //다른 인스턴스 동기화
         eventPublisher.publishEvent(
-                new HubRouteChangedIntegrationEvent(
+                new HubRouteChangedEvent(
                         hubRoute.getId(),
                         HubRouteChangeType.UPDATED,
                         Instant.now()

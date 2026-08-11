@@ -22,12 +22,29 @@ public class HubGraphManager {
     private final HubRepository hubRepository;
 
     private volatile HubGraph hubGraph;
+    private volatile long localGraphVersion = -1L;
+
+    public long getLocalGraphVersion(){
+        return localGraphVersion;
+    }
 
     public HubGraph getGraph() {
         return hubGraph;
     }
 
-    public void reloadGraph(){
+    public synchronized void reloadGraph(long version){
+        log.info("현재 버전={}", localGraphVersion);
+
+        if(version <= localGraphVersion){
+            log.debug(
+                    "이미 반영된 그래프 버전입니다. localVersion={}, requestedVersion={}",
+                    localGraphVersion,
+                    version
+            );
+
+            return;
+        }
+
         List<Hub> hubs = hubRepository.findAllByDeletedAtIsNull();
         List<HubRoute> routes = hubRouteRepository.findAllByDeletedAtIsNull();
         Map<UUID, HubNode> nodes = new HashMap<>();
@@ -62,5 +79,11 @@ public class HubGraphManager {
         }
 
         hubGraph = new HubGraph(nodes);
+        localGraphVersion = version;
+
+        log.info(
+                "허브 그래프 버전 갱신 완료. localGraphVersion={}",
+                localGraphVersion
+        );
     }
 }

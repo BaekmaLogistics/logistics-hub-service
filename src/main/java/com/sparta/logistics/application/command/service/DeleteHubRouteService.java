@@ -4,7 +4,6 @@ import com.sparta.logistics.application.command.dto.hubroute.DeleteHubRouteComma
 import com.sparta.logistics.application.command.usecase.DeleteHubRouteUseCase;
 import com.sparta.logistics.application.event.HubRouteChangeType;
 import com.sparta.logistics.application.event.HubRouteChangedEvent;
-import com.sparta.logistics.application.event.HubRouteChangedIntegrationEvent;
 import com.sparta.logistics.common.code.ErrorResponseCode;
 import com.sparta.logistics.common.exception.ApiException;
 import com.sparta.logistics.domain.entity.HubRoute;
@@ -35,14 +34,9 @@ public class DeleteHubRouteService implements DeleteHubRouteUseCase {
 
         hubRoute.softDelete(command.getDeletedBy());
 
-        //현재 인스턴스 갱신
-        eventPublisher.publishEvent(
-                new HubRouteChangedEvent()
-        );
-
         //동기화
         eventPublisher.publishEvent(
-                new HubRouteChangedIntegrationEvent(
+                new HubRouteChangedEvent(
                         hubRoute.getId(),
                         HubRouteChangeType.DELETED,
                         Instant.now()

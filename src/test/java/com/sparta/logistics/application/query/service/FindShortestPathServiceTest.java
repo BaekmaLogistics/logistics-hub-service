@@ -40,9 +40,11 @@ class FindShortestPathServiceTest {
     private UUID fromHubId;
     private UUID toHubId;
     private ShortestPath shortestPath;
+    private long graphVersion;
 
     @BeforeEach
     void setUp() {
+        graphVersion = 3L;
         fromHubId = UUID.randomUUID();
         toHubId = UUID.randomUUID();
 
@@ -65,8 +67,11 @@ class FindShortestPathServiceTest {
     @DisplayName("캐시에 최단 경로가 존재하면 Dijkstra를 실행하지 않고 캐시 결과를 반환한다")
     void findShortestPath_cacheHit() {
 
+        when(hubGraphManager.getLocalGraphVersion())
+                .thenReturn(graphVersion);
+
         // given
-        when(shortestPathCache.get(fromHubId, toHubId))
+        when(shortestPathCache.get(graphVersion, fromHubId, toHubId))
                 .thenReturn(Optional.of(shortestPath));
 
         // when
@@ -82,14 +87,16 @@ class FindShortestPathServiceTest {
         assertEquals(shortestPath.totalDistance(), response.getTotalDistance());
         assertEquals(shortestPath.totalDuration(), response.getTotalDuration());
 
-        verify(shortestPathCache)
-                .get(fromHubId, toHubId);
+        verify(hubGraphManager).getLocalGraphVersion();
 
-        verifyNoInteractions(hubGraphManager);
-        verifyNoInteractions(pathFinder);
+        verify(shortestPathCache)
+                .get(graphVersion, fromHubId, toHubId);
+
+        verify(pathFinder, never())
+                .findShortestPath(any(), any(), any());
 
         verify(shortestPathCache, never())
-                .put(any(), any(), any());
+                .put(anyLong(), any(), any(), any());
     }
 
     @Test
@@ -99,7 +106,10 @@ class FindShortestPathServiceTest {
         // given
         HubGraph hubGraph = mock(HubGraph.class);
 
-        when(shortestPathCache.get(fromHubId, toHubId))
+        when(hubGraphManager.getLocalGraphVersion())
+                .thenReturn(graphVersion);
+
+        when(shortestPathCache.get(graphVersion, fromHubId, toHubId))
                 .thenReturn(Optional.empty());
 
         when(hubGraphManager.getGraph())
@@ -124,8 +134,10 @@ class FindShortestPathServiceTest {
         assertEquals(shortestPath.totalDistance(), response.getTotalDistance());
         assertEquals(shortestPath.totalDuration(), response.getTotalDuration());
 
+        verify(hubGraphManager).getLocalGraphVersion();
+
         verify(shortestPathCache)
-                .get(fromHubId, toHubId);
+                .get(graphVersion, fromHubId, toHubId);
 
         verify(hubGraphManager)
                 .getGraph();
@@ -139,6 +151,7 @@ class FindShortestPathServiceTest {
 
         verify(shortestPathCache)
                 .put(
+                        graphVersion,
                         fromHubId,
                         toHubId,
                         shortestPath

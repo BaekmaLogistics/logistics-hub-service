@@ -1,8 +1,9 @@
 package com.sparta.logistics.application.event.listener;
 
 import com.sparta.logistics.application.event.HubRouteChangedEvent;
-import com.sparta.logistics.application.graph.HubGraphManager;
-import com.sparta.logistics.application.port.ShortestPathCache;
+import com.sparta.logistics.application.event.HubRouteChangedIntegrationEvent;
+import com.sparta.logistics.application.port.GraphVersionStore;
+import com.sparta.logistics.application.port.IntegrationEventPublisher;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.event.TransactionPhase;
@@ -12,12 +13,20 @@ import org.springframework.transaction.event.TransactionalEventListener;
 @RequiredArgsConstructor
 public class HubRouteChangedEventListener {
 
-    private final HubGraphManager hubGraphManager;
-    private final ShortestPathCache shortestPathCache;
+    private final GraphVersionStore graphVersionStore;
+    private final IntegrationEventPublisher integrationEventPublisher;
 
     @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
     public void handle(HubRouteChangedEvent event){
-        hubGraphManager.reloadGraph();
-        shortestPathCache.evictAll();
+        long version = graphVersionStore.increment();
+
+        HubRouteChangedIntegrationEvent integrationEvent = new HubRouteChangedIntegrationEvent(
+                event.routeId(),
+                event.changeType(),
+                event.occurredAt(),
+                version
+        );
+
+        integrationEventPublisher.publish(integrationEvent);
     }
 }

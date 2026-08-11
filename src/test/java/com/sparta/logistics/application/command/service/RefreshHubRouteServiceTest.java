@@ -21,8 +21,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.BDDMockito.given;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.*;
 
 @Tag("unit")
 @ExtendWith(MockitoExtension.class)
@@ -120,7 +119,7 @@ class RefreshHubRouteServiceTest {
         verify(directionService)
                 .getRoute(incheonHub, seoulHub);
 
-        verify(eventPublisher)
+        verify(eventPublisher, times(2))
                 .publishEvent(any(HubRouteChangedEvent.class));
     }
 

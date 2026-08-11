@@ -93,8 +93,10 @@ class HubGraphManagerTest {
         when(hubRouteRepository.findAllByDeletedAtIsNull())
                 .thenReturn(List.of(route1, route2, route3));
 
+        long version = 1L;
+
         // when
-        hubGraphManager.reloadGraph();
+        hubGraphManager.reloadGraph(version);
 
         HubGraph graph = hubGraphManager.getGraph();
 
@@ -118,5 +120,32 @@ class HubGraphManagerTest {
 
         assertThat(gyeonggiNode.getEdges().get(0).getToHubId())
                 .isEqualTo(chungbukId);
+
+        assertThat(hubGraphManager.getLocalGraphVersion())
+                .isEqualTo(version);
+    }
+
+    @Test
+    @DisplayName("이미 반영된 버전 이하의 그래프 재적재 요청은 무시한다.")
+    void skip_reload_when_version_is_not_newer() {
+        // given
+        when(hubRepository.findAllByDeletedAtIsNull())
+                .thenReturn(List.of());
+
+        when(hubRouteRepository.findAllByDeletedAtIsNull())
+                .thenReturn(List.of());
+
+        hubGraphManager.reloadGraph(2L);
+
+        clearInvocations(hubRepository, hubRouteRepository);
+
+        // when
+        hubGraphManager.reloadGraph(1L);
+
+        // then
+        verifyNoInteractions(hubRepository, hubRouteRepository);
+
+        assertThat(hubGraphManager.getLocalGraphVersion())
+                .isEqualTo(2L);
     }
 }

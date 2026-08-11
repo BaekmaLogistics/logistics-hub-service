@@ -5,10 +5,12 @@ import com.sparta.logistics.common.code.ErrorResponseCode;
 import com.sparta.logistics.common.exception.ApiException;
 import com.sparta.logistics.domain.model.PathSegment;
 import com.sparta.logistics.domain.model.ShortestPath;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
 import java.util.*;
 
+@Slf4j
 @Component
 public class DijkstraPathFinder implements PathFinder {
 
@@ -35,6 +37,15 @@ public class DijkstraPathFinder implements PathFinder {
             distances.put(node.getHubId(), Double.MAX_VALUE);
             durations.put(node.getHubId(), Integer.MAX_VALUE);
         }
+
+        log.info(
+                "최단경로 탐색 시작. from={}, to={}, nodeCount={}, fromExists={}, toExists={}",
+                fromHubId,
+                toHubId,
+                distances.size(),
+                distances.containsKey(fromHubId),
+                distances.containsKey(toHubId)
+        );
 
         if(!distances.containsKey(fromHubId) || !distances.containsKey(toHubId)){
             throw new ApiException(ErrorResponseCode.PATH_NOT_FOUND);
@@ -94,6 +105,13 @@ public class DijkstraPathFinder implements PathFinder {
                 }
             }
         }
+
+        log.info(
+                "최단경로 탐색 완료. from={}, to={}, distance={}",
+                fromHubId,
+                toHubId,
+                distances.get(toHubId)
+        );
 
         if(distances.get(toHubId) == Double.MAX_VALUE){
             throw new ApiException(ErrorResponseCode.PATH_NOT_FOUND);
