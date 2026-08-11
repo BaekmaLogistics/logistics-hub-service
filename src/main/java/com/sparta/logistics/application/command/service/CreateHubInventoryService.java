@@ -23,15 +23,17 @@ import java.time.Instant;
 @RequiredArgsConstructor
 public class CreateHubInventoryService implements CreateHubInventoryUseCase {
 
-    private final HubInventoryRepository hubInventoryRepository;
     private final HubRepository hubRepository;
-    private final ApplicationEventPublisher eventPublisher;
     private final HubAccessValidator hubAccessValidator;
     private final ProductValidator productValidator;
+    private final HubInventoryCreator hubInventoryCreator;
 
     @Override
-    @Transactional
     public CreateHubInventoryResponse create(CreateHubInventoryCommand command){
+
+        if(command.getQuantity() < 0){
+            throw new ApiException(ErrorResponseCode.INVALID_STOCK_QUANTITY);
+        }
         //허브 존재 확인
         Hub hub = hubRepository.findById(command.getHubId())
                 .orElseThrow(() -> new ApiException(ErrorResponseCode.HUB_NOT_FOUND));
@@ -49,32 +51,6 @@ public class CreateHubInventoryService implements CreateHubInventoryUseCase {
 
         productValidator.validateExists(command.getProductId());
 
-        // 동일 허브 + 상품의 활성 재고 중복 확인
-        if(hubInventoryRepository.existsByHubAndProductIdAndDeletedAtIsNull(hub, command.getProductId())){
-            throw new ApiException(ErrorResponseCode.HUB_INVENTORY_ALREADY_EXISTS);
-        }
-
-        HubInventory inventory = HubInventory.builder()
-                .hub(hub)
-                .productId(command.getProductId())
-                .quantity(command.getQuantity())
-                .build();
-
-        HubInventory savedInventory = hubInventoryRepository.save(inventory);
-
-        if(savedInventory.isLowStock()){
-            eventPublisher.publishEvent(
-                    new InventoryLowEvent(
-                            savedInventory.getId(),
-                            savedInventory.getHub().getId(),
-                            savedInventory.getProductId(),
-                            savedInventory.getQuantity(),
-                            savedInventory.getSafetyStock(),
-                            Instant.now()
-                    )
-            );
-        }
-
-        return CreateHubInventoryResponse.from(savedInventory);
+        return hubInventoryCreator.create(hub, command);
     }
 }
