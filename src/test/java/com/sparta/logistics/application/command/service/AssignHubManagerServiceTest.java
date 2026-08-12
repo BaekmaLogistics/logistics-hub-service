@@ -2,6 +2,7 @@ package com.sparta.logistics.application.command.service;
 
 import com.sparta.logistics.application.command.dto.hub.AssignHubManagerCommand;
 import com.sparta.logistics.application.command.dto.hub.AssignHubManagerResponse;
+import com.sparta.logistics.application.port.UserReader;
 import com.sparta.logistics.common.code.ErrorResponseCode;
 import com.sparta.logistics.common.exception.ApiException;
 import com.sparta.logistics.domain.entity.Hub;
@@ -35,9 +36,13 @@ class AssignHubManagerServiceTest {
     @Mock
     private HubRepository hubRepository;
 
+    @Mock
+    private UserReader userReader;
+
     @Test
     @DisplayName("허브 관리자를 배정한다.")
     void assignManager_success() {
+        // given
         UUID hubId = UUID.randomUUID();
         UUID managerId = UUID.randomUUID();
 
@@ -55,52 +60,75 @@ class AssignHubManagerServiceTest {
 
         ReflectionTestUtils.setField(hub, "id", hubId);
 
-        when(hubRepository.findById(hubId))
-                .thenReturn(Optional.of(hub));
+        given(hubRepository.findById(hubId))
+                .willReturn(Optional.of(hub));
 
+        given(hubRepository.existsByManagerIdAndDeletedAtIsNull(managerId))
+                .willReturn(false);
+
+        given(userReader.getUser(managerId))
+                .willReturn(new UserReader.UserInfo(
+                        managerId,
+                        "HUB_MANAGER",
+                        null,
+                        null
+                ));
+
+        // when
         AssignHubManagerResponse response =
                 assignHubManagerService.assign(command);
 
+        // then
         assertThat(response).isNotNull();
         assertThat(response.getHubId()).isEqualTo(hubId);
         assertThat(response.getManagerId()).isEqualTo(managerId);
         assertThat(hub.getManagerId()).isEqualTo(managerId);
 
         verify(hubRepository).findById(hubId);
+        verify(hubRepository)
+                .existsByManagerIdAndDeletedAtIsNull(managerId);
+        verify(userReader).getUser(managerId);
     }
 
     @Test
     @DisplayName("허브가 존재하지 않으면 예외가 발생한다.")
     void assignManager_hubNotFound() {
+        // given
         UUID hubId = UUID.randomUUID();
+        UUID managerId = UUID.randomUUID();
 
         AssignHubManagerCommand command = AssignHubManagerCommand.builder()
                 .hubId(hubId)
-                .managerId(UUID.randomUUID())
+                .managerId(managerId)
                 .build();
 
-        when(hubRepository.findById(hubId))
-                .thenReturn(Optional.empty());
+        given(hubRepository.findById(hubId))
+                .willReturn(Optional.empty());
 
+        // when
         ApiException exception = assertThrows(
                 ApiException.class,
                 () -> assignHubManagerService.assign(command)
         );
 
+        // then
         assertThat(exception.getResponseCode())
                 .isEqualTo(ErrorResponseCode.HUB_NOT_FOUND);
 
         verify(hubRepository).findById(hubId);
+        verifyNoInteractions(userReader);
     }
 
     @Test
     @DisplayName("삭제된 허브는 관리자를 배정할 수 없다.")
     void assignManager_deletedHub() {
+        // given
         UUID hubId = UUID.randomUUID();
+        UUID managerId = UUID.randomUUID();
 
         AssignHubManagerCommand command = AssignHubManagerCommand.builder()
                 .hubId(hubId)
-                .managerId(UUID.randomUUID())
+                .managerId(managerId)
                 .build();
 
         Hub hub = Hub.builder()
@@ -113,22 +141,25 @@ class AssignHubManagerServiceTest {
         ReflectionTestUtils.setField(hub, "id", hubId);
         ReflectionTestUtils.setField(hub, "deletedAt", Instant.now());
 
-        when(hubRepository.findById(hubId))
-                .thenReturn(Optional.of(hub));
+        given(hubRepository.findById(hubId))
+                .willReturn(Optional.of(hub));
 
+        // when
         ApiException exception = assertThrows(
                 ApiException.class,
                 () -> assignHubManagerService.assign(command)
         );
 
+        // then
         assertThat(exception.getResponseCode())
                 .isEqualTo(ErrorResponseCode.HUB_ALREADY_DELETED);
 
         verify(hubRepository).findById(hubId);
+        verifyNoInteractions(userReader);
     }
 
     @Test
-    @DisplayName("이미 배정된 관리자이면 예외가 발생한다.")
+    @DisplayName("현재 허브에 이미 배정된 관리자이면 예외가 발생한다.")
     void assignManager_alreadyAssigned() {
         // given
         UUID hubId = UUID.randomUUID();
@@ -149,8 +180,8 @@ class AssignHubManagerServiceTest {
         ReflectionTestUtils.setField(hub, "id", hubId);
         ReflectionTestUtils.setField(hub, "managerId", managerId);
 
-        when(hubRepository.findById(hubId))
-                .thenReturn(Optional.of(hub));
+        given(hubRepository.findById(hubId))
+                .willReturn(Optional.of(hub));
 
         // when
         ApiException exception = assertThrows(
@@ -163,10 +194,11 @@ class AssignHubManagerServiceTest {
                 .isEqualTo(ErrorResponseCode.HUB_MANAGER_ALREADY_ASSIGNED);
 
         verify(hubRepository).findById(hubId);
+        verifyNoInteractions(userReader);
     }
 
     @Test
-    @DisplayName("이미 다른 활성 허브에 배정된 관리자는 배정할 수 없다")
+    @DisplayName("이미 다른 활성 허브에 배정된 관리자는 배정할 수 없다.")
     void assign_fail_managerAlreadyAssignedToOtherHub() {
         // given
         UUID hubId = UUID.randomUUID();
@@ -190,11 +222,8 @@ class AssignHubManagerServiceTest {
         given(hubRepository.findById(hubId))
                 .willReturn(Optional.of(hub));
 
-        given(
-                hubRepository.existsByManagerIdAndDeletedAtIsNull(
-                        managerId
-                )
-        ).willReturn(true);
+        given(hubRepository.existsByManagerIdAndDeletedAtIsNull(managerId))
+                .willReturn(true);
 
         // when & then
         assertThatThrownBy(() ->
@@ -207,12 +236,65 @@ class AssignHubManagerServiceTest {
                                 .getMessage()
                 );
 
-        verify(hubRepository)
-                .findById(hubId);
-
+        verify(hubRepository).findById(hubId);
         verify(hubRepository)
                 .existsByManagerIdAndDeletedAtIsNull(managerId);
 
+        verifyNoInteractions(userReader);
+
         assertThat(hub.getManagerId()).isNull();
+    }
+
+    @Test
+    @DisplayName("HUB_MANAGER 권한이 아닌 사용자는 허브 관리자로 배정할 수 없다.")
+    void assignManager_fail_whenUserIsNotHubManager() {
+        // given
+        UUID hubId = UUID.randomUUID();
+        UUID managerId = UUID.randomUUID();
+
+        AssignHubManagerCommand command = AssignHubManagerCommand.builder()
+                .hubId(hubId)
+                .managerId(managerId)
+                .build();
+
+        Hub hub = Hub.builder()
+                .name("서울특별시 센터")
+                .address("서울특별시 송파구 송파대로 55")
+                .latitude(37.514575)
+                .longitude(127.105399)
+                .build();
+
+        ReflectionTestUtils.setField(hub, "id", hubId);
+
+        given(hubRepository.findById(hubId))
+                .willReturn(Optional.of(hub));
+
+        given(hubRepository.existsByManagerIdAndDeletedAtIsNull(managerId))
+                .willReturn(false);
+
+        given(userReader.getUser(managerId))
+                .willReturn(new UserReader.UserInfo(
+                        managerId,
+                        "COMPANY_MANAGER",
+                        null,
+                        UUID.randomUUID()
+                ));
+
+        // when
+        ApiException exception = assertThrows(
+                ApiException.class,
+                () -> assignHubManagerService.assign(command)
+        );
+
+        // then
+        assertThat(exception.getResponseCode())
+                .isEqualTo(ErrorResponseCode.HUB_MANAGER_ROLE_REQUIRED);
+
+        assertThat(hub.getManagerId()).isNull();
+
+        verify(hubRepository).findById(hubId);
+        verify(hubRepository)
+                .existsByManagerIdAndDeletedAtIsNull(managerId);
+        verify(userReader).getUser(managerId);
     }
 }

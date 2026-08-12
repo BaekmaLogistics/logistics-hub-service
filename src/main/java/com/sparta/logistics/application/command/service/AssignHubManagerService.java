@@ -3,6 +3,7 @@ package com.sparta.logistics.application.command.service;
 import com.sparta.logistics.application.command.dto.hub.AssignHubManagerCommand;
 import com.sparta.logistics.application.command.dto.hub.AssignHubManagerResponse;
 import com.sparta.logistics.application.command.usecase.AssignHubManagerUseCase;
+import com.sparta.logistics.application.port.UserReader;
 import com.sparta.logistics.common.code.ErrorResponseCode;
 import com.sparta.logistics.common.exception.ApiException;
 import com.sparta.logistics.domain.entity.Hub;
@@ -18,6 +19,7 @@ import java.util.Objects;
 public class AssignHubManagerService implements AssignHubManagerUseCase {
 
     private final HubRepository hubRepository;
+    private final UserReader userReader;
 
     @Override
     @Transactional
@@ -38,9 +40,11 @@ public class AssignHubManagerService implements AssignHubManagerUseCase {
             throw new ApiException(ErrorResponseCode.HUB_MANAGER_ALREADY_ASSIGNED);
         }
 
-        // TODO User Service 연동
-        // 1. managerId 존재 여부 확인
-        // 2. HUB_MANAGER 권한 검증
+        UserReader.UserInfo user = userReader.getUser(command.getManagerId());
+
+        if(!"HUB_MANAGER".equals(user.role())){
+            throw new ApiException(ErrorResponseCode.HUB_MANAGER_ROLE_REQUIRED);
+        }
 
         hub.assignManagerId(command.getManagerId());
 
