@@ -1,9 +1,10 @@
 package com.sparta.logistics.presentation.common.exception;
 
 
+import com.sparta.logistics.common.exception.ApiException;
 import com.sparta.logistics.infrastructure.feign.exception.FeignApiException;
 import com.sparta.logistics.presentation.common.dto.response.ErrorResponse;
-import com.sparta.logistics.presentation.common.dto.response.ErrorResponseCode;
+import com.sparta.logistics.common.code.ErrorResponseCode;
 import feign.RetryableException;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.extern.slf4j.Slf4j;
@@ -14,6 +15,7 @@ import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.security.authorization.AuthorizationDeniedException;
 
 import java.util.HashMap;
 
@@ -83,6 +85,15 @@ public class GlobalExceptionHandler {
 
         return ErrorResponse.toResponseEntity(
                 ErrorResponseCode.FEIGN_CLIENT_ERROR
+        );
+    }
+
+    @ExceptionHandler(AuthorizationDeniedException.class)
+    public ResponseEntity<ErrorResponse> handleAuthorizationDeniedException(
+            AuthorizationDeniedException e
+    ) {
+        return ErrorResponse.toResponseEntity(
+                ErrorResponseCode.FORBIDDEN
         );
     }
 }

@@ -1,8 +1,13 @@
+server:
+  port: ${SERVER_PORT:8082}
+
 spring:
   application:
-    name: logistics
+    name: hub-service
   #  profiles:
-  #    active: dev
+  #    active: local
+  config:
+    import: "optional:configserver:"
   datasource:
     url: jdbc:postgresql://${DB_HOST}:${DB_PORT}/${DB_NAME}
     username: ${DB_USER}
@@ -16,6 +21,7 @@ spring:
         format_sql: true
         use_sql_comments: true
         impl.uuid_binary_compatibility: true
+
   # Redis 설정, Redis 사용하지 않을 시 주석처리
   data:
     redis:
@@ -30,6 +36,8 @@ spring:
 
   cloud:
     openfeign:
+      circuitbreaker:
+        enabled: true
       client:
         config:
           default:
@@ -43,6 +51,21 @@ message:
     delivery: delivery.queue
     hub: hub.queue
     notification: notification.queue
+    company: company.queue
+  binding-key:
+    notification:
+      inventory-low: hub.inventory.low
+      order-created: order.created
+      order-canceled: order.canceled
+      order-completed: order.completed
+    hub:
+      route-changed: hub.route.changed
+    company:
+      hub-deleted: hub.deleted
+
+hub:
+  graph:
+    sync-interval-ms: 10000
 
 management:
   tracing:
@@ -52,7 +75,20 @@ management:
 
   zipkin:
     tracing:
-      endpoint: http://localhost:9411/api/v2/spans
+      endpoint: ${ZIPKIN_SERVER:http://localhost:9411/api/v2/spans}
+
+  endpoints:
+    web:
+      exposure:
+        include: health,circuitbreakers,circuitbreakerevents
+
+  endpoint:
+    health:
+      show-details: always
+
+  health:
+    circuitbreakers:
+      enabled: true
 
 springdoc:
   api-docs:
@@ -63,6 +99,25 @@ springdoc:
     enabled: true
   override-with-generic-response: false
   use-fqn: true
+
+naver:
+  maps:
+    client-id: ${NAVER_MAP_CLIENT_ID}
+    client-secret: ${NAVER_MAP_CLIENT_SECRET}
+    url: ${NAVER_MAP_URL}
+
+resilience4j:
+  circuitbreaker:
+    configs:
+      default:
+        register-health-indicator: true
+        sliding-window-type: COUNT_BASED
+        sliding-window-size: 5
+        minimum-number-of-calls: 5
+        failure-rate-threshold: 50
+        wait-duration-in-open-state: 10s
+        permitted-number-of-calls-in-half-open-state: 2
+        record-failure-predicate: com.sparta.logistics.infrastructure.feign.resilience.FeignCircuitBreakerFailurePredicate
 
 logging:
   level:
