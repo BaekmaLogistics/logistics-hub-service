@@ -12,7 +12,6 @@ import java.util.UUID;
 
 @FeignClient(
         name = "product-service",
-        url = "${service.product.url}",
         fallbackFactory = ProductClientFallbackFactory.class
 )
 public interface ProductClient {
