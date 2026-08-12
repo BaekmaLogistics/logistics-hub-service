@@ -7,6 +7,7 @@ import com.sparta.logistics.common.exception.ApiException;
 import com.sparta.logistics.domain.entity.Hub;
 import com.sparta.logistics.domain.repository.HubRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -36,6 +37,12 @@ public class HubManagerAssigner {
         }
 
         hub.assignManagerId(command.getManagerId());
+
+        try{
+            hubRepository.flush();
+        } catch(DataIntegrityViolationException e){
+            throw new ApiException(ErrorResponseCode.HUB_MANAGER_ALREADY_ASSIGNED);
+        }
 
         return AssignHubManagerResponse.from(hub);
     }
