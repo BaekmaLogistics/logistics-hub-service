@@ -4,8 +4,8 @@ server:
 spring:
   application:
     name: hub-service
-  #  profiles:
-  #    active: dev
+  config:
+    import: "optional:configserver:" # local 개발 시 config server 연동 x
   datasource:
     url: jdbc:postgresql://${DB_HOST}:${DB_PORT}/${DB_NAME}
     username: ${DB_USER}
@@ -41,6 +41,10 @@ spring:
             connect-timeout: 5000
             read-timeout: 3000
             logger-level: basic
+
+eureka:
+  client:
+    enabled: false
 
 message:
   exchange: baekma.exchange # Producer만 적용
