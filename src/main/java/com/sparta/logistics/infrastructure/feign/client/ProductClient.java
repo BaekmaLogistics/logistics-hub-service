@@ -2,6 +2,7 @@ package com.sparta.logistics.infrastructure.feign.client;
 
 import com.sparta.logistics.infrastructure.feign.config.OpenFeignConfig;
 import com.sparta.logistics.infrastructure.feign.dto.product.ProductResponse;
+import com.sparta.logistics.infrastructure.feign.fallback.ProductClientFallbackFactory;
 import com.sparta.logistics.presentation.common.dto.response.GeneralResponse;
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -11,7 +12,8 @@ import java.util.UUID;
 
 @FeignClient(
         name = "product-service",
-        url = "${service.product.url}"
+        url = "${service.product.url}",
+        fallbackFactory = ProductClientFallbackFactory.class
 )
 public interface ProductClient {
 
