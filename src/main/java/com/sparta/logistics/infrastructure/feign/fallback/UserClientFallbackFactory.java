@@ -2,7 +2,7 @@ package com.sparta.logistics.infrastructure.feign.fallback;
 
 import com.sparta.logistics.common.code.ErrorResponseCode;
 import com.sparta.logistics.common.exception.ApiException;
-import com.sparta.logistics.infrastructure.feign.client.ProductClient;
+import com.sparta.logistics.infrastructure.feign.client.UserClient;
 import com.sparta.logistics.infrastructure.feign.exception.FeignApiException;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.cloud.openfeign.FallbackFactory;
@@ -10,14 +10,14 @@ import org.springframework.stereotype.Component;
 
 @Slf4j
 @Component
-public class ProductClientFallbackFactory implements FallbackFactory<ProductClient> {
+public class UserClientFallbackFactory implements FallbackFactory<UserClient> {
 
     @Override
-    public ProductClient create(Throwable cause){
-        return productId -> {
+    public UserClient create(Throwable cause){
+        return userId -> {
             log.error(
-                    "Product Service 호출 실패. productId={}",
-                    productId,
+                    "User Service 호출 실패. userId={}",
+                    userId,
                     cause
             );
 

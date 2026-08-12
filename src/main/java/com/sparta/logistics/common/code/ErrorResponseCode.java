@@ -14,6 +14,7 @@ public enum ErrorResponseCode implements ApiResponseCode {
     UNAUTHORIZED(HttpStatus.UNAUTHORIZED, "COMMON_0004", "인증이 필요합니다."),
     FORBIDDEN(HttpStatus.FORBIDDEN, "COMMON_0005", "접근 권한이 없습니다."),
     EXTERNAL_SERVICE_UNAVAILABLE(HttpStatus.SERVICE_UNAVAILABLE, "COMMON_0006", "외부 서비스를 일시적으로 사용할 수 없습니다."),
+    EXTERNAL_SERVICE_INVALID_RESPONSE(HttpStatus.BAD_GATEWAY, "COMMON_0007", "외부 서비스에서 유효하지 않은 응답을 반환했습니다."),
 
     HUB_ALREADY_EXISTS(HttpStatus.CONFLICT, "HUB_0001", "이미 존재하는 허브입니다."),
     HUB_NOT_FOUND(HttpStatus.NOT_FOUND, "HUB_0002", "허브를 찾을 수 없습니다."),
@@ -23,6 +24,7 @@ public enum ErrorResponseCode implements ApiResponseCode {
     HUB_MANAGER_ALREADY_ASSIGNED(HttpStatus.BAD_REQUEST, "HUB_0006", "이미 해당 허브의 담당자로 배정된 관리자입니다."),
     INVALID_SORT_PROPERTY(HttpStatus.BAD_REQUEST, "HUB_0007", "지원하지 않는 정렬 기준입니다."),
     HUB_ACCESS_DENIED(HttpStatus.FORBIDDEN,"HUB_0008", "담당 허브에 대한 접근 권한이 없습니다."),
+    HUB_MANAGER_ROLE_REQUIRED(HttpStatus.BAD_REQUEST, "HUB_0009", "허브 관리자 권한을 가진 사용자만 배정할 수 있습니다."),
 
     HUB_ROUTE_NOT_FOUND(HttpStatus.NOT_FOUND, "HUB_ROUTE_0001", "허브 연결을 찾을 수 없습니다."),
     INVALID_HUB_ROUTE(HttpStatus.BAD_REQUEST, "HUB_ROUTE_0002", "출발 허브와 도착 허브가 같을 수 없습니다."),

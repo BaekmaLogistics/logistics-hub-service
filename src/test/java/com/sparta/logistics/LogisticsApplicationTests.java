@@ -1,13 +1,11 @@
 package com.sparta.logistics;
 
+import com.sparta.logistics.support.IntegrationTestSupport;
 import org.junit.jupiter.api.Test;
-import org.springframework.boot.test.context.SpringBootTest;
 
-@SpringBootTest
-class LogisticsApplicationTests {
+class LogisticsApplicationTests extends IntegrationTestSupport {
 
     @Test
     void contextLoads() {
     }
-
 }

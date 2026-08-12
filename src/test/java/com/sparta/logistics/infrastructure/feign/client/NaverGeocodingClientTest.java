@@ -2,6 +2,7 @@ package com.sparta.logistics.infrastructure.feign.client;
 
 import com.sparta.logistics.application.common.dto.Coordinate;
 import com.sparta.logistics.application.common.service.GeocodingService;
+import com.sparta.logistics.support.IntegrationTestSupport;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
@@ -12,8 +13,7 @@ import org.springframework.context.ApplicationContext;
 import static org.assertj.core.api.Assertions.assertThat;
 
 @Tag("external")
-@SpringBootTest
-class NaverGeocodingClientTest {
+class NaverGeocodingClientTest extends IntegrationTestSupport {
 
     @Autowired
     private GeocodingService geocodingService;
