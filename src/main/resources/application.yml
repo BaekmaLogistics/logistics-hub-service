@@ -3,7 +3,7 @@ server:
 
 spring:
   application:
-    name:  hub-service
+    name: hub-service
   #  profiles:
   #    active: local
   config:
@@ -21,6 +21,7 @@ spring:
         format_sql: true
         use_sql_comments: true
         impl.uuid_binary_compatibility: true
+
   # Redis 설정, Redis 사용하지 않을 시 주석처리
   data:
     redis:
@@ -35,6 +36,8 @@ spring:
 
   cloud:
     openfeign:
+      circuitbreaker:
+        enabled: true
       client:
         config:
           default:
@@ -74,18 +77,18 @@ management:
     tracing:
       endpoint: ${ZIPKIN_SERVER:http://localhost:9411/api/v2/spans}
 
-    endpoints:
-      web:
-        exposure:
-          include: health,circuitbreakers,circuitbreakerevents
+  endpoints:
+    web:
+      exposure:
+        include: health,circuitbreakers,circuitbreakerevents
 
-      endpoint:
-        health:
-          show-details: always
+  endpoint:
+    health:
+      show-details: always
 
-      health:
-        circuitbreakers:
-          enabled: true
+  health:
+    circuitbreakers:
+      enabled: true
 
 springdoc:
   api-docs:
