@@ -14,7 +14,7 @@ import java.util.List;
 public class OpenApiConfig {
 
     @Bean
-    public OpenAPI customOpenAPI() {
+    public OpenAPI openAPI() {
         // SecurityScheme 이름 정의
         String jwtSchemeName = "jwtAuth";
 
