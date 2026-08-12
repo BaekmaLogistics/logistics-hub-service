@@ -119,6 +119,11 @@ resilience4j:
         permitted-number-of-calls-in-half-open-state: 2
         record-failure-predicate: com.sparta.logistics.infrastructure.feign.resilience.FeignCircuitBreakerFailurePredicate
 
+  timelimiter:
+    configs:
+      default:
+        timeout-duration: 6s
+
 logging:
   level:
     org.hibernate.SQL: debug
