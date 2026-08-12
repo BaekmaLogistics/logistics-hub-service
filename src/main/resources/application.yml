@@ -1,6 +1,6 @@
 spring:
   application:
-    name: logistics
+    name: ${SERVICE_NAME:logistics-service}
   #  profiles:
   #    active: local
   config:
@@ -32,6 +32,8 @@ spring:
 
   cloud:
     openfeign:
+      okhttp:
+        enabled: true
       client:
         config:
           default:
@@ -42,6 +44,7 @@ spring:
 message:
   exchange: baekma.exchange # Producer만 적용
   queue:
+    order: order.queue
     delivery: delivery.queue
     hub: hub.queue
     notification: notification.queue
@@ -56,6 +59,17 @@ message:
       route-changed: hub.route.changed
     company:
       hub-deleted: hub.deleted
+    order:
+      inventory-deducted: hub.inventory.deducted
+      inventory-deduct-failed: hub.inventory.deduct.failed
+      inventory-restored: hub.inventory.restored
+      inventory-restore-failed: hub.inventory.restore.failed
+      delivery-created: delivery.created
+      delivery-create-failed: delivery.create.failed
+      delivery-canceled: delivery.canceled
+      delivery-cancel-failed: delivery.cancel.failed
+  outbox:
+    publish-delay-ms: 5000
 
 springdoc:
   api-docs:
