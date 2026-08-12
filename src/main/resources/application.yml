@@ -42,10 +42,6 @@ spring:
             read-timeout: 3000
             logger-level: basic
 
-eureka:
-  client:
-    enabled: false
-
 message:
   exchange: baekma.exchange # Producer만 적용
   queue:
