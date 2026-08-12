@@ -1,6 +1,8 @@
 package com.sparta.logistics.infrastructure.feign.adapter;
 
 import com.sparta.logistics.application.port.UserReader;
+import com.sparta.logistics.common.code.ErrorResponseCode;
+import com.sparta.logistics.common.exception.ApiException;
 import com.sparta.logistics.infrastructure.feign.client.UserClient;
 import com.sparta.logistics.infrastructure.feign.dto.user.UserResponse;
 import lombok.RequiredArgsConstructor;
@@ -17,6 +19,10 @@ public class UserFeignAdapter implements UserReader {
     @Override
     public UserInfo getUser(UUID userId){
         UserResponse response = userClient.getUser(userId).data();
+
+        if(!userId.equals(response.userId())){
+            throw new ApiException(ErrorResponseCode.EXTERNAL_SERVICE_INVALID_RESPONSE);
+        }
 
         return new UserInfo(
                 response.userId(),

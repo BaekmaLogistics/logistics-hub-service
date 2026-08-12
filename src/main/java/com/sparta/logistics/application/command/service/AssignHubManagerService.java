@@ -18,27 +18,11 @@ import java.util.Objects;
 @RequiredArgsConstructor
 public class AssignHubManagerService implements AssignHubManagerUseCase {
 
-    private final HubRepository hubRepository;
     private final UserReader userReader;
+    private final HubManagerAssigner hubManagerAssigner;
 
     @Override
-    @Transactional
     public AssignHubManagerResponse assign(AssignHubManagerCommand command){
-
-        Hub hub = hubRepository.findById(command.getHubId())
-                .orElseThrow(() -> new ApiException(ErrorResponseCode.HUB_NOT_FOUND));
-
-        if(hub.isDeleted()){
-            throw new ApiException(ErrorResponseCode.HUB_ALREADY_DELETED);
-        }
-
-        if(Objects.equals(hub.getManagerId(), command.getManagerId())){
-            throw new ApiException(ErrorResponseCode.HUB_MANAGER_ALREADY_ASSIGNED);
-        }
-
-        if(hubRepository.existsByManagerIdAndDeletedAtIsNull(command.getManagerId())){
-            throw new ApiException(ErrorResponseCode.HUB_MANAGER_ALREADY_ASSIGNED);
-        }
 
         UserReader.UserInfo user = userReader.getUser(command.getManagerId());
 
@@ -46,8 +30,6 @@ public class AssignHubManagerService implements AssignHubManagerUseCase {
             throw new ApiException(ErrorResponseCode.HUB_MANAGER_ROLE_REQUIRED);
         }
 
-        hub.assignManagerId(command.getManagerId());
-
-        return AssignHubManagerResponse.from(hub);
+        return hubManagerAssigner.assign(command);
     }
 }

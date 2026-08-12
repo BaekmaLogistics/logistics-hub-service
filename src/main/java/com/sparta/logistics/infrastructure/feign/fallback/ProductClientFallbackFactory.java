@@ -3,6 +3,7 @@ package com.sparta.logistics.infrastructure.feign.fallback;
 import com.sparta.logistics.common.code.ErrorResponseCode;
 import com.sparta.logistics.common.exception.ApiException;
 import com.sparta.logistics.infrastructure.feign.client.ProductClient;
+import com.sparta.logistics.infrastructure.feign.exception.FeignApiException;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.cloud.openfeign.FallbackFactory;
 import org.springframework.stereotype.Component;
@@ -19,6 +20,10 @@ public class ProductClientFallbackFactory implements FallbackFactory<ProductClie
                     productId,
                     cause
             );
+
+            if(cause instanceof FeignApiException exception && exception.getStatus() < 500){
+                throw exception;
+            }
 
             throw new ApiException(ErrorResponseCode.EXTERNAL_SERVICE_UNAVAILABLE);
         };

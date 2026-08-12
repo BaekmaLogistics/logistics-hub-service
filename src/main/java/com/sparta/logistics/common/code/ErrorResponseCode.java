@@ -14,6 +14,7 @@ public enum ErrorResponseCode implements ApiResponseCode {
     UNAUTHORIZED(HttpStatus.UNAUTHORIZED, "COMMON_0004", "인증이 필요합니다."),
     FORBIDDEN(HttpStatus.FORBIDDEN, "COMMON_0005", "접근 권한이 없습니다."),
     EXTERNAL_SERVICE_UNAVAILABLE(HttpStatus.SERVICE_UNAVAILABLE, "COMMON_0006", "외부 서비스를 일시적으로 사용할 수 없습니다."),
+    EXTERNAL_SERVICE_INVALID_RESPONSE(HttpStatus.BAD_GATEWAY, "COMMON_0007", "외부 서비스에서 유효하지 않은 응답을 반환했습니다."),
 
     HUB_ALREADY_EXISTS(HttpStatus.CONFLICT, "HUB_0001", "이미 존재하는 허브입니다."),
     HUB_NOT_FOUND(HttpStatus.NOT_FOUND, "HUB_0002", "허브를 찾을 수 없습니다."),
