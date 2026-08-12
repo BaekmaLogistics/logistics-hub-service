@@ -80,10 +80,16 @@ dependencies {
 
     implementation 'org.springframework.cloud:spring-cloud-starter-circuitbreaker-resilience4j'
 
+    testImplementation 'org.springframework.boot:spring-boot-testcontainers'
+    testImplementation 'org.testcontainers:junit-jupiter'
+    testImplementation 'org.testcontainers:postgresql'
+
 }
 
 tasks.named('test') {
-    useJUnitPlatform()
+    useJUnitPlatform{
+        excludeTags 'external'
+    }
 }
 
 //QueryDSL 설정

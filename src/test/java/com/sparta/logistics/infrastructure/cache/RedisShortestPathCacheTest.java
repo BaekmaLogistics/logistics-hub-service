@@ -3,6 +3,7 @@ package com.sparta.logistics.infrastructure.cache;
 import com.sparta.logistics.application.port.ShortestPathCache;
 import com.sparta.logistics.domain.model.PathSegment;
 import com.sparta.logistics.domain.model.ShortestPath;
+import com.sparta.logistics.support.IntegrationTestSupport;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
@@ -15,8 +16,7 @@ import java.util.UUID;
 import static org.junit.jupiter.api.Assertions.*;
 
 @Tag("integrationTest")
-@SpringBootTest
-class RedisShortestPathCacheTest {
+class RedisShortestPathCacheTest extends IntegrationTestSupport {
 
     @Autowired
     private ShortestPathCache shortestPathCache;

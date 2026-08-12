@@ -6,11 +6,11 @@ import com.sparta.logistics.domain.entity.Hub;
 import com.sparta.logistics.domain.entity.HubInventory;
 import com.sparta.logistics.domain.repository.HubInventoryRepository;
 import com.sparta.logistics.domain.repository.HubRepository;
+import com.sparta.logistics.support.IntegrationTestSupport;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.context.SpringBootTest;
 
 import java.util.UUID;
 
@@ -18,8 +18,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
 @Tag("integration")
-@SpringBootTest
-class DecreaseHubInventoryIdempotencyTest {
+class DecreaseHubInventoryIdempotencyTest extends IntegrationTestSupport {
 
     @Autowired
     private DecreaseHubInventoryUseCase decreaseHubInventoryUseCase;
@@ -35,15 +34,19 @@ class DecreaseHubInventoryIdempotencyTest {
     void decrease_sameRequestOnlyOnce() {
 
         // given
-        UUID hubId = UUID.fromString(
-                "330f5e07-1bb8-45f0-84f5-03db26562caa"
-        );
-
         UUID orderId = UUID.randomUUID();
         UUID productId = UUID.randomUUID();
 
-        Hub hub = hubRepository.findById(hubId)
-                .orElseThrow();
+        Hub hub = Hub.builder()
+                .name("멱등성 테스트 허브-" + UUID.randomUUID())
+                .address("서울특별시 테스트 주소")
+                .latitude(37.0)
+                .longitude(127.0)
+                .build();
+
+        hub = hubRepository.saveAndFlush(hub);
+
+        UUID hubId = hub.getId();
 
         HubInventory inventory = HubInventory.builder()
                 .hub(hub)
@@ -75,11 +78,6 @@ class DecreaseHubInventoryIdempotencyTest {
                 hubInventoryRepository.findById(inventory.getId())
                         .orElseThrow();
 
-        System.out.println(
-                "동일 요청 2회 호출 - 예상 수량 = 90, 실제 수량 = "
-                        + result.getQuantity()
-        );
-
         assertEquals(90, result.getQuantity());
     }
 
@@ -88,15 +86,19 @@ class DecreaseHubInventoryIdempotencyTest {
     void decrease_sameIdempotencyKeyWithDifferentQuantity() {
 
         // given
-        UUID hubId = UUID.fromString(
-                "330f5e07-1bb8-45f0-84f5-03db26562caa"
-        );
-
         UUID orderId = UUID.randomUUID();
         UUID productId = UUID.randomUUID();
 
-        Hub hub = hubRepository.findById(hubId)
-                .orElseThrow();
+        Hub hub = Hub.builder()
+                .name("멱등성 충돌 테스트 허브-" + UUID.randomUUID())
+                .address("서울특별시 테스트 주소")
+                .latitude(37.0)
+                .longitude(127.0)
+                .build();
+
+        hub = hubRepository.saveAndFlush(hub);
+
+        UUID hubId = hub.getId();
 
         HubInventory inventory = HubInventory.builder()
                 .hub(hub)
@@ -130,7 +132,6 @@ class DecreaseHubInventoryIdempotencyTest {
                 hubInventoryRepository.findById(inventory.getId())
                         .orElseThrow();
 
-        // 최초 요청의 10개만 차감되어야 함
         assertEquals(90, result.getQuantity());
     }
 }
