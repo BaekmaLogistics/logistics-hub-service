@@ -9,8 +9,8 @@ import org.springframework.scheduling.annotation.EnableScheduling;
 @EnableFeignClients(
         defaultConfiguration = OpenFeignConfig.class
 )
-@SpringBootApplication
 @EnableScheduling
+@SpringBootApplication
 public class LogisticsApplication {
 
     public static void main(String[] args) {
