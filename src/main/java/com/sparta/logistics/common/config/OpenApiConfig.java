@@ -33,7 +33,7 @@ public class OpenApiConfig {
                 .addSecurityItem(securityRequirement)
                 .components(components)
                 .info(new io.swagger.v3.oas.models.info.Info()
-                        .title("Notification Service API")
+                        .title("Hub Service API")
                         .version("v1.0"));
     }
 }
