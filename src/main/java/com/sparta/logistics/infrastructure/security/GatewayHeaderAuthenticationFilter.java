@@ -2,6 +2,7 @@ package com.sparta.logistics.infrastructure.security;
 
 import com.sparta.logistics.domain.model.UserRole;
 import com.sparta.logistics.presentation.common.constant.HeaderConstants;
+import com.sparta.logistics.presentation.common.constant.RoleHeaderParser;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -41,7 +42,7 @@ public class GatewayHeaderAuthenticationFilter extends OncePerRequestFilter {
     ){
         try{
             UUID userId = UUID.fromString(userIdHeader);
-            UserRole userRole = UserRole.valueOf(userRoleHeader);
+            UserRole userRole = RoleHeaderParser.parse(userRoleHeader);
 
             SimpleGrantedAuthority authority = new SimpleGrantedAuthority("ROLE_"+userRole.name());
 
