@@ -3,7 +3,7 @@ server:
 
 spring:
   application:
-    name: hub-service
+    name: ${SERVICE_NAME:hub-service}
   #  profiles:
   #    active: local
   config:
@@ -21,7 +21,6 @@ spring:
         format_sql: true
         use_sql_comments: true
         impl.uuid_binary_compatibility: true
-
   # Redis 설정, Redis 사용하지 않을 시 주석처리
   data:
     redis:
@@ -38,6 +37,8 @@ spring:
     openfeign:
       circuitbreaker:
         enabled: true
+      okhttp:
+        enabled: true
       client:
         config:
           default:
@@ -48,6 +49,7 @@ spring:
 message:
   exchange: baekma.exchange # Producer만 적용
   queue:
+    order: order.queue
     delivery: delivery.queue
     hub: hub.queue
     notification: notification.queue
@@ -62,6 +64,17 @@ message:
       route-changed: hub.route.changed
     company:
       hub-deleted: hub.deleted
+    order:
+      inventory-deducted: hub.inventory.deducted
+      inventory-deduct-failed: hub.inventory.deduct.failed
+      inventory-restored: hub.inventory.restored
+      inventory-restore-failed: hub.inventory.restore.failed
+      delivery-created: delivery.created
+      delivery-create-failed: delivery.create.failed
+      delivery-canceled: delivery.canceled
+      delivery-cancel-failed: delivery.cancel.failed
+  outbox:
+    publish-delay-ms: 5000
 
 hub:
   graph:
