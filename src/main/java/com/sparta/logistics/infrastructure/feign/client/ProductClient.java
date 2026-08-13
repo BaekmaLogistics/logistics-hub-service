@@ -11,7 +11,7 @@ import org.springframework.web.bind.annotation.PathVariable;
 import java.util.UUID;
 
 @FeignClient(
-        name = "product-service",
+        name = "company-product-service",
         fallbackFactory = ProductClientFallbackFactory.class
 )
 public interface ProductClient {
